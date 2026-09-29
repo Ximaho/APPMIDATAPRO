@@ -172,4 +172,30 @@ class ClaudeAiServiceTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("falso.png");
     }
+
+    @Test
+    void showsApiErrorMessageOnBadRequest() {
+        server.expect(requestTo("https://api.anthropic.com/v1/messages"))
+                .andRespond(withStatus(HttpStatus.BAD_REQUEST)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body("{\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"detalle de prueba\"}}"));
+
+        MockMultipartFile image = new MockMultipartFile("image", "r.png", "image/png", PNG_BYTES);
+        assertThatThrownBy(() -> service.analyze(List.of(image), "descripcion"))
+                .isInstanceOf(ClaudeAnalysisException.class)
+                .hasMessageContaining("detalle de prueba");
+    }
+
+    @Test
+    void rejectsImagesLargerThanApiDimensionLimit() throws Exception {
+        java.awt.image.BufferedImage tall = new java.awt.image.BufferedImage(10, 8100,
+                java.awt.image.BufferedImage.TYPE_BYTE_GRAY);
+        java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+        javax.imageio.ImageIO.write(tall, "png", out);
+        MockMultipartFile image = new MockMultipartFile("images", "pagina-completa.png", "image/png", out.toByteArray());
+
+        assertThatThrownBy(() -> service.analyze(List.of(image), "descripcion"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("8100");
+    }
 }

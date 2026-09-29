@@ -15,9 +15,13 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,6 +47,8 @@ public class ClaudeAiService {
 
     /** Límite de tamaño por imagen aceptado por la API de Anthropic. */
     public static final long MAX_IMAGE_BYTES = 5L * 1024 * 1024;
+    /** Dimensión máxima (ancho o alto) que acepta la API por imagen. */
+    public static final int MAX_IMAGE_DIMENSION = 8000;
     /** Máximo de capturas por análisis. */
     public static final int MAX_IMAGES = 10;
     /**
@@ -220,7 +226,8 @@ public class ClaudeAiService {
             return body;
         } catch (RestClientResponseException e) {
             log.warn("Error de la API de Anthropic: HTTP {} - {}", e.getStatusCode().value(), e.getResponseBodyAsString());
-            throw new ClaudeAnalysisException(describeHttpError(e.getStatusCode().value()), e);
+            throw new ClaudeAnalysisException(
+                    describeHttpError(e.getStatusCode().value(), apiErrorMessage(e.getResponseBodyAsString())), e);
         } catch (ResourceAccessException e) {
             log.warn("No se pudo conectar con la API de Anthropic", e);
             throw new ClaudeAnalysisException(
@@ -290,19 +297,54 @@ public class ClaudeAiService {
                     "La imagen " + image.getOriginalFilename() + " supera el tamaño máximo permitido de 5 MB.");
         }
         byte[] header = new byte[8];
+        String mediaType = null;
         try (var in = image.getInputStream()) {
             int read = in.readNBytes(header, 0, header.length);
             if (read >= 8 && (header[0] & 0xFF) == 0x89 && header[1] == 'P' && header[2] == 'N' && header[3] == 'G') {
-                return MediaType.IMAGE_PNG_VALUE;
-            }
-            if (read >= 3 && (header[0] & 0xFF) == 0xFF && (header[1] & 0xFF) == 0xD8 && (header[2] & 0xFF) == 0xFF) {
-                return MediaType.IMAGE_JPEG_VALUE;
+                mediaType = MediaType.IMAGE_PNG_VALUE;
+            } else if (read >= 3 && (header[0] & 0xFF) == 0xFF && (header[1] & 0xFF) == 0xD8 && (header[2] & 0xFF) == 0xFF) {
+                mediaType = MediaType.IMAGE_JPEG_VALUE;
             }
         } catch (IOException e) {
             throw new IllegalArgumentException("No fue posible leer la imagen cargada.", e);
         }
-        throw new IllegalArgumentException(
-                "Formato no soportado en " + image.getOriginalFilename() + ". Carga imágenes PNG o JPEG.");
+        if (mediaType == null) {
+            throw new IllegalArgumentException(
+                    "Formato no soportado en " + image.getOriginalFilename() + ". Carga imágenes PNG o JPEG.");
+        }
+        validateDimensions(image);
+        return mediaType;
+    }
+
+    /**
+     * La API rechaza imágenes de más de {@value #MAX_IMAGE_DIMENSION} px por lado (típico en capturas
+     * de "página completa"). Solo lee el encabezado; si no puede leerlo, deja la decisión a la API.
+     */
+    private void validateDimensions(MultipartFile image) {
+        try (ImageInputStream in = ImageIO.createImageInputStream(image.getInputStream())) {
+            if (in == null) {
+                return;
+            }
+            Iterator<ImageReader> readers = ImageIO.getImageReaders(in);
+            if (!readers.hasNext()) {
+                return;
+            }
+            ImageReader reader = readers.next();
+            try {
+                reader.setInput(in, true, true);
+                int width = reader.getWidth(0);
+                int height = reader.getHeight(0);
+                if (width > MAX_IMAGE_DIMENSION || height > MAX_IMAGE_DIMENSION) {
+                    throw new IllegalArgumentException("La imagen " + image.getOriginalFilename() + " mide "
+                            + width + "×" + height + " px; el máximo es " + MAX_IMAGE_DIMENSION
+                            + " px por lado. Divídela en varias capturas más cortas.");
+                }
+            } finally {
+                reader.dispose();
+            }
+        } catch (IOException e) {
+            log.debug("No se pudieron leer las dimensiones de {}", image.getOriginalFilename(), e);
+        }
     }
 
     String validateDescription(String description) {
@@ -317,9 +359,19 @@ public class ClaudeAiService {
         return trimmed;
     }
 
-    private static String describeHttpError(int status) {
+    /** Extrae {@code error.message} del cuerpo de error de la API, o cadena vacía si no existe. */
+    private String apiErrorMessage(String body) {
+        try {
+            return objectMapper.readTree(body).path("error").path("message").asText("");
+        } catch (JsonProcessingException | IllegalArgumentException e) {
+            return "";
+        }
+    }
+
+    private static String describeHttpError(int status, String apiMessage) {
         return switch (status) {
-            case 400 -> "La solicitud de análisis no es válida (revisa el formato de la imagen).";
+            case 400 -> "La API de Claude rechazó la solicitud"
+                    + (apiMessage.isBlank() ? "." : ": " + apiMessage);
             case 401, 403 -> "La API key de Anthropic es inválida o no tiene permisos. Revisa ANTHROPIC_API_KEY.";
             case 404 -> "El modelo configurado no está disponible. Revisa la propiedad anthropic.model.";
             case 413 -> "La imagen es demasiado grande para el servicio de análisis.";
