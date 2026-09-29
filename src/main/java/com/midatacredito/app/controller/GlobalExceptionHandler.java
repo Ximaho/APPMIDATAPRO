@@ -13,7 +13,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public String handleMaxUpload(RedirectAttributes redirectAttributes) {
-        redirectAttributes.addFlashAttribute("error", "La imagen supera el tamaño máximo permitido de 5 MB.");
+        redirectAttributes.addFlashAttribute("error", "Las capturas superan el tamaño permitido (máx. 5 MB cada una y 20 MB en total).");
         return "redirect:/dashboard";
     }
 }

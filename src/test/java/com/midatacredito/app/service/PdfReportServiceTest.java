@@ -15,7 +15,8 @@ class PdfReportServiceTest {
     void generatesValidPdf() {
         CreditAnalysis analysis = new CreditAnalysis();
         analysis.setActivityDescription("Comerciante independiente con ingresos variables.");
-        analysis.setImageFileName("reporte.png");
+        analysis.setImageFileNames("reporte-1.png, reporte-2.png");
+        analysis.setImageCount(2);
         analysis.setModelUsed("claude-sonnet-5-5");
 
         AnalysisResult result = new AnalysisResult(720, "Buen comportamiento de pago.",

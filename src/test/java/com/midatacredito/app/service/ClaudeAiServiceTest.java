@@ -11,6 +11,9 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 
+import java.util.Collections;
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
@@ -23,6 +26,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 class ClaudeAiServiceTest {
 
     private static final byte[] PNG_BYTES = {(byte) 0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A, 1, 2, 3};
+    private static final byte[] JPEG_BYTES = {(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xE0, 0, 0x10};
 
     private MockRestServiceServer server;
     private ClaudeAiService service;
@@ -52,16 +56,21 @@ class ClaudeAiServiceTest {
                 .andExpect(method(HttpMethod.POST))
                 .andExpect(header("x-api-key", "test-key"))
                 .andExpect(jsonPath("$.model").value("claude-sonnet-5-5"))
-                .andExpect(jsonPath("$.messages[0].content[0].type").value("image"))
-                .andExpect(jsonPath("$.messages[0].content[0].source.type").value("base64"))
-                .andExpect(jsonPath("$.messages[0].content[0].source.media_type").value("image/png"))
-                .andExpect(jsonPath("$.messages[0].content[1].type").value("text"))
+                .andExpect(jsonPath("$.messages[0].content.length()").value(5))
+                .andExpect(jsonPath("$.messages[0].content[0].text").value("Captura 1 de 2:"))
+                .andExpect(jsonPath("$.messages[0].content[1].type").value("image"))
+                .andExpect(jsonPath("$.messages[0].content[1].source.type").value("base64"))
+                .andExpect(jsonPath("$.messages[0].content[1].source.media_type").value("image/png"))
+                .andExpect(jsonPath("$.messages[0].content[2].text").value("Captura 2 de 2:"))
+                .andExpect(jsonPath("$.messages[0].content[3].source.media_type").value("image/jpeg"))
+                .andExpect(jsonPath("$.messages[0].content[4].type").value("text"))
                 .andExpect(jsonPath("$.output_config.format.type").value("json_schema"))
                 .andExpect(jsonPath("$.output_config.format.schema.required.length()").value(4))
                 .andRespond(withSuccess(apiResponse, MediaType.APPLICATION_JSON));
 
-        MockMultipartFile image = new MockMultipartFile("image", "reporte.png", "image/png", PNG_BYTES);
-        AnalysisResult result = service.analyze(image, "Trabajo independiente, ingresos estables.");
+        MockMultipartFile page1 = new MockMultipartFile("images", "reporte-1.png", "image/png", PNG_BYTES);
+        MockMultipartFile page2 = new MockMultipartFile("images", "reporte-2.jpg", "image/jpeg", JPEG_BYTES);
+        AnalysisResult result = service.analyze(List.of(page1, page2), "Trabajo independiente, ingresos estables.");
 
         server.verify();
         assertThat(result.estimatedScore()).isEqualTo(612);
@@ -83,7 +92,7 @@ class ClaudeAiServiceTest {
     @Test
     void rejectsNonImageFiles() {
         MockMultipartFile pdf = new MockMultipartFile("image", "doc.png", "image/png", "%PDF-1.4".getBytes());
-        assertThatThrownBy(() -> service.analyze(pdf, "descripcion"))
+        assertThatThrownBy(() -> service.analyze(List.of(pdf), "descripcion"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("PNG o JPEG");
     }
@@ -91,7 +100,7 @@ class ClaudeAiServiceTest {
     @Test
     void rejectsEmptyDescription() {
         MockMultipartFile image = new MockMultipartFile("image", "r.png", "image/png", PNG_BYTES);
-        assertThatThrownBy(() -> service.analyze(image, "   "))
+        assertThatThrownBy(() -> service.analyze(List.of(image), "   "))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -103,7 +112,7 @@ class ClaudeAiServiceTest {
                         .body("{\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"}}"));
 
         MockMultipartFile image = new MockMultipartFile("image", "r.png", "image/png", PNG_BYTES);
-        assertThatThrownBy(() -> service.analyze(image, "descripcion"))
+        assertThatThrownBy(() -> service.analyze(List.of(image), "descripcion"))
                 .isInstanceOf(ClaudeAnalysisException.class)
                 .hasMessageContaining("ANTHROPIC_API_KEY");
     }
@@ -114,7 +123,7 @@ class ClaudeAiServiceTest {
                 .andRespond(withSuccess("{\"stop_reason\":\"refusal\",\"content\":[]}", MediaType.APPLICATION_JSON));
 
         MockMultipartFile image = new MockMultipartFile("image", "r.png", "image/png", PNG_BYTES);
-        assertThatThrownBy(() -> service.analyze(image, "descripcion"))
+        assertThatThrownBy(() -> service.analyze(List.of(image), "descripcion"))
                 .isInstanceOf(ClaudeAnalysisException.class);
     }
 
@@ -122,8 +131,45 @@ class ClaudeAiServiceTest {
     void failsFastWithoutApiKey() {
         ClaudeAiService noKey = new ClaudeAiService(RestClient.create(), new ObjectMapper(), "", "m", 100);
         MockMultipartFile image = new MockMultipartFile("image", "r.png", "image/png", PNG_BYTES);
-        assertThatThrownBy(() -> noKey.analyze(image, "descripcion"))
+        assertThatThrownBy(() -> noKey.analyze(List.of(image), "descripcion"))
                 .isInstanceOf(ClaudeAnalysisException.class)
                 .hasMessageContaining("ANTHROPIC_API_KEY");
+    }
+
+    @Test
+    void rejectsMoreThanMaxImages() {
+        MockMultipartFile image = new MockMultipartFile("images", "r.png", "image/png", PNG_BYTES);
+        List<MockMultipartFile> tooMany = Collections.nCopies(ClaudeAiService.MAX_IMAGES + 1, image);
+        assertThatThrownBy(() -> service.analyze(List.copyOf(tooMany), "descripcion"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("máximo " + ClaudeAiService.MAX_IMAGES);
+    }
+
+    @Test
+    void rejectsWhenTotalSizeExceedsLimit() {
+        byte[] big = new byte[(int) ClaudeAiService.MAX_IMAGE_BYTES - 10];
+        System.arraycopy(PNG_BYTES, 0, big, 0, PNG_BYTES.length);
+        MockMultipartFile image = new MockMultipartFile("images", "big.png", "image/png", big);
+        assertThatThrownBy(() -> service.analyze(List.of(image, image, image, image, image), "descripcion"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("20 MB");
+    }
+
+    @Test
+    void rejectsEmptySelection() {
+        MockMultipartFile empty = new MockMultipartFile("images", "", "application/octet-stream", new byte[0]);
+        assertThatThrownBy(() -> service.analyze(List.of(empty), "descripcion"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("al menos una captura");
+    }
+
+    @Test
+    void reportsInvalidFileAmongSeveralBeforeCheckingApiKey() {
+        ClaudeAiService noKey = new ClaudeAiService(RestClient.create(), new ObjectMapper(), "", "m", 100);
+        MockMultipartFile good = new MockMultipartFile("images", "ok.png", "image/png", PNG_BYTES);
+        MockMultipartFile fake = new MockMultipartFile("images", "falso.png", "image/png", "%PDF-1.4".getBytes());
+        assertThatThrownBy(() -> noKey.analyze(List.of(good, fake), "descripcion"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("falso.png");
     }
 }

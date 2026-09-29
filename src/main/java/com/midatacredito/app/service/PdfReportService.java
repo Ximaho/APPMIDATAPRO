@@ -125,7 +125,9 @@ public class PdfReportService {
         PdfPTable info = new PdfPTable(new float[]{1.2f, 3f});
         info.setWidthPercentage(100);
         addInfoRow(info, "Titular", userName);
-        addInfoRow(info, "Archivo analizado", analysis.getImageFileName());
+        Integer count = analysis.getImageCount();
+        addInfoRow(info, count != null && count > 1 ? "Capturas analizadas (" + count + ")" : "Captura analizada",
+                analysis.getImageFileNames());
         addInfoRow(info, "Modelo de IA", analysis.getModelUsed());
         info.setSpacingAfter(12f);
         document.add(info);

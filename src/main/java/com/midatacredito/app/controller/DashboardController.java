@@ -24,6 +24,8 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.List;
+
 /**
  * Panel principal: carga de la captura + descripción, ejecución del análisis con Claude,
  * historial de consultas y descarga del informe PDF.
@@ -56,6 +58,7 @@ public class DashboardController {
         model.addAttribute("user", user);
         model.addAttribute("history", analysisService.history(user));
         model.addAttribute("maxDescriptionChars", ClaudeAiService.MAX_DESCRIPTION_CHARS);
+        model.addAttribute("maxImages", ClaudeAiService.MAX_IMAGES);
 
         if (analysisId != null) {
             analysisService.findForUser(analysisId, user).ifPresent(analysis -> {
@@ -67,13 +70,13 @@ public class DashboardController {
     }
 
     @PostMapping(value = "/dashboard/analyze", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public String analyze(@RequestParam("image") MultipartFile image,
+    public String analyze(@RequestParam(name = "images", required = false) List<MultipartFile> images,
                           @RequestParam("description") String description,
                           Authentication authentication,
                           RedirectAttributes redirectAttributes) {
         User user = currentUser(authentication);
         try {
-            CreditAnalysis analysis = analysisService.analyzeAndSave(user, image, description);
+            CreditAnalysis analysis = analysisService.analyzeAndSave(user, images == null ? List.of() : images, description);
             redirectAttributes.addFlashAttribute("success", "Análisis completado correctamente.");
             return "redirect:/dashboard?analysisId=" + analysis.getId();
         } catch (IllegalArgumentException | ClaudeAnalysisException e) {

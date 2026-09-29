@@ -28,13 +28,14 @@
         <!-- Formulario de análisis -->
         <section class="card">
             <h2>Nuevo análisis</h2>
-            <p class="muted">Carga una captura de tu reporte de MiDataCrédito y describe tus actividades económicas recientes.</p>
+            <p class="muted">Carga una o varias capturas de tu reporte de MiDataCrédito y describe tus actividades económicas recientes.</p>
 
             <form id="analyze-form" th:action="@{/dashboard/analyze}" method="post"
                   enctype="multipart/form-data" class="form">
-                <label for="image">Captura del reporte (PNG o JPEG, máx. 5 MB)</label>
-                <input type="file" id="image" name="image" accept="image/png,image/jpeg" required>
-                <img id="preview" class="preview hidden" alt="Vista previa de la captura">
+                <label for="images">Capturas del reporte (PNG o JPEG)</label>
+                <input type="file" id="images" name="images" accept="image/png,image/jpeg" multiple required>
+                <small class="muted">Hasta <span th:text="${maxImages}">10</span> capturas, máx. 5 MB cada una y 20 MB en total. Puedes seleccionar varias a la vez con Ctrl.</small>
+                <div id="previews" class="previews hidden"></div>
 
                 <label for="description">Actividad económica reciente</label>
                 <textarea id="description" name="description" rows="7" required
@@ -44,7 +45,7 @@
                 <small class="muted"><span id="char-count">0</span> / <span th:text="${maxDescriptionChars}">4000</span> caracteres</small>
 
                 <button type="submit" id="submit-btn" class="btn btn-primary btn-block">Analizar con IA</button>
-                <p id="loading" class="loading hidden">Analizando tu reporte… esto puede tardar hasta un minuto.</p>
+                <p id="loading" class="loading hidden">Analizando tu reporte… esto puede tardar uno o dos minutos.</p>
             </form>
         </section>
 
@@ -100,7 +101,7 @@
                 <tr>
                     <th>#</th>
                     <th>Fecha</th>
-                    <th>Archivo</th>
+                    <th>Capturas</th>
                     <th>Puntaje</th>
                     <th>Acciones</th>
                 </tr>
@@ -109,7 +110,7 @@
                 <tr th:each="h : ${history}" th:classappend="${analysis != null and analysis.id == h.id} ? 'active'">
                     <td th:text="${h.id}"></td>
                     <td th:text="${#temporals.format(h.createdAt, 'dd/MM/yyyy HH:mm')}"></td>
-                    <td th:text="${h.imageFileName}"></td>
+                    <td th:text="${h.imageCount != null ? h.imageCount : 1}" th:title="${h.imageFileNames}"></td>
                     <td><strong th:text="${h.estimatedScore}"></strong></td>
                     <td class="actions">
                         <a th:href="@{/dashboard(analysisId=${h.id})}">Ver</a>
@@ -124,11 +125,13 @@
     <p class="disclaimer">Este análisis es una estimación generada por IA y no reemplaza el reporte oficial de DataCrédito Experian ni constituye asesoría financiera.</p>
 </main>
 
-<script>
+<script th:inline="javascript">
     (function () {
         const MAX_BYTES = 5 * 1024 * 1024;
-        const input = document.getElementById('image');
-        const preview = document.getElementById('preview');
+        const MAX_TOTAL_BYTES = 20 * 1024 * 1024;
+        const MAX_FILES = /*[[${maxImages}]]*/ 10;
+        const input = document.getElementById('images');
+        const previews = document.getElementById('previews');
         const textarea = document.getElementById('description');
         const counter = document.getElementById('char-count');
         const form = document.getElementById('analyze-form');
@@ -140,17 +143,33 @@
         updateCount();
 
         input.addEventListener('change', () => {
-            const file = input.files[0];
-            input.setCustomValidity('');
-            if (!file) { preview.classList.add('hidden'); return; }
-            if (!['image/png', 'image/jpeg'].includes(file.type)) {
-                input.setCustomValidity('Solo se aceptan imágenes PNG o JPEG.');
-            } else if (file.size > MAX_BYTES) {
-                input.setCustomValidity('La imagen supera el tamaño máximo de 5 MB.');
+            const files = Array.from(input.files);
+            let error = '';
+            const total = files.reduce((sum, f) => sum + f.size, 0);
+            if (files.length > MAX_FILES) {
+                error = 'Puedes cargar máximo ' + MAX_FILES + ' capturas por análisis.';
+            } else if (files.some(f => !['image/png', 'image/jpeg'].includes(f.type))) {
+                error = 'Solo se aceptan imágenes PNG o JPEG.';
+            } else if (files.some(f => f.size > MAX_BYTES)) {
+                error = 'Cada imagen puede pesar máximo 5 MB.';
+            } else if (total > MAX_TOTAL_BYTES) {
+                error = 'Las capturas suman más de 20 MB.';
             }
+            input.setCustomValidity(error);
             input.reportValidity();
-            preview.src = URL.createObjectURL(file);
-            preview.classList.remove('hidden');
+
+            previews.innerHTML = '';
+            files.forEach((file, i) => {
+                const figure = document.createElement('figure');
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(file);
+                img.alt = 'Captura ' + (i + 1);
+                const caption = document.createElement('figcaption');
+                caption.textContent = (i + 1) + '. ' + file.name;
+                figure.append(img, caption);
+                previews.appendChild(figure);
+            });
+            previews.classList.toggle('hidden', files.length === 0);
         });
 
         form.addEventListener('submit', () => {

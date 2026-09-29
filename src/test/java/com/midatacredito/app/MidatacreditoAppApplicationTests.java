@@ -92,7 +92,8 @@ class MidatacreditoAppApplicationTests {
         CreditAnalysis analysis = new CreditAnalysis();
         analysis.setUser(user);
         analysis.setActivityDescription("Empleada con contrato indefinido.");
-        analysis.setImageFileName("reporte.png");
+        analysis.setImageFileNames("reporte-1.png, reporte-2.png");
+        analysis.setImageCount(2);
         analysis.setEstimatedScore(780);
         analysis.setSummary("Buen historial crediticio.");
         analysis.setProblemsJson("[\"Uso alto de la tarjeta\"]");
@@ -124,10 +125,21 @@ class MidatacreditoAppApplicationTests {
     void analyzeWithoutApiKeyShowsFriendlyError() throws Exception {
         userRepository.save(new User("Sofía", "sofia@example.com", "$2a$10$hash"));
         byte[] png = {(byte) 0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A};
-        mvc.perform(multipart("/dashboard/analyze").file(new MockMultipartFile("image", "r.png", "image/png", png))
+        mvc.perform(multipart("/dashboard/analyze")
+                        .file(new MockMultipartFile("images", "r1.png", "image/png", png))
+                        .file(new MockMultipartFile("images", "r2.png", "image/png", png))
                         .param("description", "Independiente").with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/dashboard"))
                 .andExpect(flash().attribute("error", org.hamcrest.Matchers.containsString("ANTHROPIC_API_KEY")));
+    }
+
+    @Test
+    @WithMockUser(username = "juan@example.com")
+    void analyzeWithoutImagesShowsFriendlyError() throws Exception {
+        userRepository.save(new User("Juan", "juan@example.com", "$2a$10$hash"));
+        mvc.perform(multipart("/dashboard/analyze").param("description", "Independiente").with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(flash().attribute("error", org.hamcrest.Matchers.containsString("al menos una captura")));
     }
 }

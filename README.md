@@ -1,15 +1,15 @@
 # MiDataCrédito Analyzer
 
 Aplicación web en **Java 17 + Spring Boot 3.5** para analizar el riesgo y el historial crediticio a partir de
-una captura de pantalla de **MiDataCrédito (Colombia)** y la descripción de la actividad económica del usuario,
+una o varias capturas de pantalla de **MiDataCrédito (Colombia)** y la descripción de la actividad económica del usuario,
 usando la **API de Claude (Anthropic)**.
 
 ## Flujo
 
 1. El usuario se registra (`/register`) e inicia sesión (`/login`).
-2. En el **Dashboard** (`/dashboard`) carga una captura PNG/JPEG de su reporte y describe sus actividades económicas.
-3. La imagen se codifica en **Base64** y se envía a `https://api.anthropic.com/v1/messages` junto con el prompt,
-   en un mensaje multimodal (bloque `image` + bloque `text`).
+2. En el **Dashboard** (`/dashboard`) carga de 1 a 10 capturas PNG/JPEG de su reporte y describe sus actividades económicas.
+3. Las imágenes se codifican en **Base64** y se envían a `https://api.anthropic.com/v1/messages` en un único
+   mensaje multimodal (un bloque `image` numerado por captura + un bloque `text` con el prompt).
 4. Claude responde con un JSON estructurado: `estimated_score` (150–950), `summary`, `problems` y `recommendations`.
 5. El análisis se guarda en la base de datos y se puede descargar como **informe PDF**.
 
@@ -138,7 +138,9 @@ mvn spring-boot:run
 - Protección CSRF activa en todos los formularios (Thymeleaf inserta el token automáticamente).
 - `/login`, `/register` y los recursos estáticos son públicos; `/`, `/dashboard` y el resto requieren sesión.
 - Cada usuario solo puede ver y descargar sus propios análisis.
-- La imagen se valida por su firma binaria (PNG/JPEG), no solo por la extensión, con un máximo de 5 MB.
+- Cada imagen se valida por su firma binaria (PNG/JPEG), no solo por la extensión.
+- Límites: hasta 10 capturas por análisis, 5 MB cada una y 20 MB en total (así la solicitud queda bajo el
+  límite de 32 MB de la API de Anthropic). Se ajustan en `ClaudeAiService` (`MAX_IMAGES`, `MAX_TOTAL_IMAGE_BYTES`).
 - La consola H2 debe deshabilitarse en producción (`spring.h2.console.enabled=false`, ya desactivada en el perfil `postgres`).
 
 ## Aviso

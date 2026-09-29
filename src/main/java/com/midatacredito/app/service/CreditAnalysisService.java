@@ -13,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Orquesta el flujo de análisis: llamada a Claude, persistencia del historial
@@ -23,6 +24,7 @@ public class CreditAnalysisService {
 
     /** Longitud de las columnas de texto largo definidas en {@link CreditAnalysis}. */
     private static final int MAX_TEXT_COLUMN = 20000;
+    private static final int MAX_FILE_NAMES_COLUMN = 3000;
 
     private static final TypeReference<List<String>> STRING_LIST = new TypeReference<>() {
     };
@@ -43,14 +45,17 @@ public class CreditAnalysisService {
      * Ejecuta el análisis con Claude y guarda el resultado en el historial del usuario.
      * La llamada a la API se hace fuera de la transacción para no retener conexiones de BD.
      */
-    public CreditAnalysis analyzeAndSave(User user, MultipartFile image, String description) {
-        AnalysisResult result = claudeAiService.analyze(image, description);
+    public CreditAnalysis analyzeAndSave(User user, List<MultipartFile> images, String description) {
+        AnalysisResult result = claudeAiService.analyze(images, description);
+        List<MultipartFile> files = images.stream().filter(f -> f != null && !f.isEmpty()).toList();
 
         CreditAnalysis analysis = new CreditAnalysis();
         analysis.setUser(user);
         analysis.setActivityDescription(description.trim());
-        analysis.setImageFileName(sanitizeFileName(image.getOriginalFilename()));
-        analysis.setImageMediaType(image.getContentType());
+        analysis.setImageFileNames(truncate(files.stream()
+                .map(f -> sanitizeFileName(f.getOriginalFilename()))
+                .collect(Collectors.joining(", ")), MAX_FILE_NAMES_COLUMN));
+        analysis.setImageCount(files.size());
         analysis.setEstimatedScore(result.estimatedScore());
         analysis.setSummary(truncate(result.summary(), MAX_TEXT_COLUMN));
         analysis.setProblemsJson(toJson(result.problems()));

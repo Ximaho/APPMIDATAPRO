@@ -33,11 +33,12 @@ public class CreditAnalysis {
     @Column(name = "activity_description", nullable = false, length = 4000)
     private String activityDescription;
 
-    @Column(name = "image_file_name", length = 255)
-    private String imageFileName;
+    /** Nombres de las capturas analizadas, separados por coma. */
+    @Column(name = "image_file_names", length = 3000)
+    private String imageFileNames;
 
-    @Column(name = "image_media_type", length = 20)
-    private String imageMediaType;
+    @Column(name = "image_count")
+    private Integer imageCount;
 
     @Column(name = "estimated_score", nullable = false)
     private Integer estimatedScore;
@@ -82,20 +83,20 @@ public class CreditAnalysis {
         this.activityDescription = activityDescription;
     }
 
-    public String getImageFileName() {
-        return imageFileName;
+    public String getImageFileNames() {
+        return imageFileNames;
     }
 
-    public void setImageFileName(String imageFileName) {
-        this.imageFileName = imageFileName;
+    public void setImageFileNames(String imageFileNames) {
+        this.imageFileNames = imageFileNames;
     }
 
-    public String getImageMediaType() {
-        return imageMediaType;
+    public Integer getImageCount() {
+        return imageCount;
     }
 
-    public void setImageMediaType(String imageMediaType) {
-        this.imageMediaType = imageMediaType;
+    public void setImageCount(Integer imageCount) {
+        this.imageCount = imageCount;
     }
 
     public Integer getEstimatedScore() {

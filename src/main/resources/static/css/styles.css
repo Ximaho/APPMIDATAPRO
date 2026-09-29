@@ -64,7 +64,10 @@ a { color: var(--primary); }
 .form input:focus, .form textarea:focus { outline: 2px solid #93c5fd; border-color: var(--primary); }
 .form input.invalid { border-color: var(--danger); }
 .field-error { color: var(--danger); font-size: .8rem; }
-.preview { max-width: 100%; max-height: 220px; object-fit: contain; border: 1px solid var(--border); border-radius: 8px; margin-top: .5rem; }
+.previews { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: .5rem; margin-top: .5rem; }
+.previews figure { margin: 0; }
+.previews img { width: 100%; height: 110px; object-fit: cover; object-position: top; border: 1px solid var(--border); border-radius: 8px; }
+.previews figcaption { font-size: .75rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .loading { color: var(--primary); font-weight: 600; text-align: center; }
 
 /* ---------- Botones ---------- */
