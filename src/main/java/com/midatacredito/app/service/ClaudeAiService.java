@@ -369,6 +369,10 @@ public class ClaudeAiService {
     }
 
     private static String describeHttpError(int status, String apiMessage) {
+        if (apiMessage.toLowerCase(java.util.Locale.ROOT).contains("credit balance")) {
+            return "Tu cuenta de Anthropic no tiene saldo suficiente. Compra créditos en "
+                    + "console.anthropic.com → Plans & Billing e inténtalo de nuevo.";
+        }
         return switch (status) {
             case 400 -> "La API de Claude rechazó la solicitud"
                     + (apiMessage.isBlank() ? "." : ": " + apiMessage);

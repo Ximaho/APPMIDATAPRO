@@ -198,4 +198,17 @@ class ClaudeAiServiceTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("8100");
     }
+
+    @Test
+    void explainsLowCreditBalanceInSpanish() {
+        server.expect(requestTo("https://api.anthropic.com/v1/messages"))
+                .andRespond(withStatus(HttpStatus.BAD_REQUEST)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body("{\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.\"}}"));
+
+        MockMultipartFile image = new MockMultipartFile("image", "r.png", "image/png", PNG_BYTES);
+        assertThatThrownBy(() -> service.analyze(List.of(image), "descripcion"))
+                .isInstanceOf(ClaudeAnalysisException.class)
+                .hasMessageContaining("no tiene saldo suficiente");
+    }
 }
