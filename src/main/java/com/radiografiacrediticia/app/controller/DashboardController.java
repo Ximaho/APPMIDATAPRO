@@ -1,13 +1,13 @@
-package com.midatacredito.app.controller;
+package com.radiografiacrediticia.app.controller;
 
-import com.midatacredito.app.dto.AnalysisResult;
-import com.midatacredito.app.model.CreditAnalysis;
-import com.midatacredito.app.model.User;
-import com.midatacredito.app.repository.UserRepository;
-import com.midatacredito.app.service.ClaudeAiService;
-import com.midatacredito.app.service.ClaudeAnalysisException;
-import com.midatacredito.app.service.CreditAnalysisService;
-import com.midatacredito.app.service.PdfReportService;
+import com.radiografiacrediticia.app.dto.AnalysisResult;
+import com.radiografiacrediticia.app.model.CreditAnalysis;
+import com.radiografiacrediticia.app.model.User;
+import com.radiografiacrediticia.app.repository.UserRepository;
+import com.radiografiacrediticia.app.service.ClaudeAiService;
+import com.radiografiacrediticia.app.service.ClaudeAnalysisException;
+import com.radiografiacrediticia.app.service.CreditAnalysisService;
+import com.radiografiacrediticia.app.service.PdfReportService;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;

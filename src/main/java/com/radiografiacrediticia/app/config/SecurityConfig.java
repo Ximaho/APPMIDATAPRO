@@ -1,4 +1,4 @@
-package com.midatacredito.app.config;
+package com.radiografiacrediticia.app.config;
 
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
@@ -16,7 +16,7 @@ import org.springframework.security.web.SecurityFilterChain;
  *   <li>Todo lo demás (incluyendo / y /dashboard) requiere autenticación.</li>
  *   <li>Contraseñas codificadas con BCrypt.</li>
  * </ul>
- * La autenticación se resuelve con {@link com.midatacredito.app.service.UserDetailsServiceImpl},
+ * La autenticación se resuelve con {@link com.radiografiacrediticia.app.service.UserDetailsServiceImpl},
  * que Spring Boot detecta automáticamente como único {@code UserDetailsService}.
  */
 @Configuration

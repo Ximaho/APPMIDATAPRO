@@ -1,4 +1,4 @@
-package com.midatacredito.app.dto;
+package com.radiografiacrediticia.app.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;

@@ -1,7 +1,7 @@
-package com.midatacredito.app.service;
+package com.radiografiacrediticia.app.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.midatacredito.app.dto.AnalysisResult;
+import com.radiografiacrediticia.app.dto.AnalysisResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;

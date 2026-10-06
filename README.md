@@ -1,4 +1,4 @@
-# MiDataCrédito Analyzer
+# Radiografía Crediticia
 
 Aplicación web en **Java 17 + Spring Boot 3.5** para analizar el riesgo y el historial crediticio a partir de
 una o varias capturas de pantalla de **MiDataCrédito (Colombia)** y la descripción de la actividad económica del usuario,
@@ -16,7 +16,7 @@ usando la **API de Claude (Anthropic)**.
 ## Estructura
 
 ```text
-src/main/java/com/midatacredito/app/
+src/main/java/com/radiografiacrediticia/app/
 ├── config/
 │   ├── SecurityConfig.java          # Spring Security: login por formulario, BCrypt, rutas públicas/protegidas
 │   └── AnthropicClientConfig.java   # RestClient para la API de Anthropic (URL base, versión, timeouts)
@@ -39,7 +39,7 @@ src/main/java/com/midatacredito/app/
 │   ├── ClaudeAnalysisException.java # Errores controlados del análisis
 │   ├── CreditAnalysisService.java   # Orquestación: análisis + persistencia + historial
 │   └── PdfReportService.java        # Generación del PDF en memoria (OpenPDF)
-└── MidatacreditoAppApplication.java
+└── RadiografiaCrediticiaApplication.java
 
 src/main/resources/
 ├── templates/  (login.html, register.html, dashboard.html)
@@ -115,18 +115,18 @@ Para generar un JAR ejecutable:
 
 ```bash
 mvn clean package
-java -jar target/midatacredito-app-1.0.0.jar
+java -jar target/radiografia-crediticia-1.0.0.jar
 ```
 
 ### Consola H2 (desarrollo)
 
-http://localhost:8080/h2-console — JDBC URL: `jdbc:h2:file:./data/midatacredito`, usuario `sa`, sin contraseña.
+http://localhost:8080/h2-console — JDBC URL: `jdbc:h2:file:./data/radiografiacrediticia`, usuario `sa`, sin contraseña.
 
 ### PostgreSQL
 
 ```bash
 export SPRING_PROFILES_ACTIVE=postgres
-export DB_URL=jdbc:postgresql://localhost:5432/midatacredito
+export DB_URL=jdbc:postgresql://localhost:5432/radiografiacrediticia
 export DB_USERNAME=postgres
 export DB_PASSWORD=tu_clave
 mvn spring-boot:run

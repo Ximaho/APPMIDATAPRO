@@ -1,4 +1,4 @@
-package com.midatacredito.app.config;
+package com.radiografiacrediticia.app.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

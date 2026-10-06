@@ -1,4 +1,4 @@
-package com.midatacredito.app.dto;
+package com.radiografiacrediticia.app.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

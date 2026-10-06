@@ -1,7 +1,7 @@
-package com.midatacredito.app.repository;
+package com.radiografiacrediticia.app.repository;
 
-import com.midatacredito.app.model.CreditAnalysis;
-import com.midatacredito.app.model.User;
+import com.radiografiacrediticia.app.model.CreditAnalysis;
+import com.radiografiacrediticia.app.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

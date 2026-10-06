@@ -1,4 +1,4 @@
-package com.midatacredito.app.service;
+package com.radiografiacrediticia.app.service;
 
 import com.lowagie.text.Chunk;
 import com.lowagie.text.Document;
@@ -18,8 +18,8 @@ import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfPageEventHelper;
 import com.lowagie.text.pdf.PdfWriter;
-import com.midatacredito.app.dto.AnalysisResult;
-import com.midatacredito.app.model.CreditAnalysis;
+import com.radiografiacrediticia.app.dto.AnalysisResult;
+import com.radiografiacrediticia.app.model.CreditAnalysis;
 import org.springframework.stereotype.Service;
 
 import java.awt.Color;
@@ -62,8 +62,8 @@ public class PdfReportService {
             PdfWriter writer = PdfWriter.getInstance(document, out);
             writer.setPageEvent(new FooterEvent());
             document.addTitle("Informe de análisis crediticio");
-            document.addAuthor("MiDataCrédito Analyzer");
-            document.addCreator("MiDataCrédito Analyzer");
+            document.addAuthor("Radiografía Crediticia");
+            document.addCreator("Radiografía Crediticia");
             document.open();
 
             addHeader(document, analysis);
@@ -223,7 +223,7 @@ public class PdfReportService {
         @Override
         public void onEndPage(PdfWriter writer, Document document) {
             PdfContentByte cb = writer.getDirectContent();
-            Phrase footer = new Phrase("MiDataCrédito Analyzer  ·  Página " + writer.getPageNumber(), smallFont);
+            Phrase footer = new Phrase("Radiografía Crediticia  ·  Página " + writer.getPageNumber(), smallFont);
             ColumnText.showTextAligned(cb, Element.ALIGN_CENTER, footer,
                     (document.left() + document.right()) / 2, document.bottom() - 24, 0);
         }

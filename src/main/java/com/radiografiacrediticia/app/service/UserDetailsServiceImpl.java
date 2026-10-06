@@ -1,7 +1,7 @@
-package com.midatacredito.app.service;
+package com.radiografiacrediticia.app.service;
 
-import com.midatacredito.app.model.User;
-import com.midatacredito.app.repository.UserRepository;
+import com.radiografiacrediticia.app.model.User;
+import com.radiografiacrediticia.app.repository.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;

@@ -1,12 +1,12 @@
-package com.midatacredito.app.service;
+package com.radiografiacrediticia.app.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.midatacredito.app.dto.AnalysisResult;
-import com.midatacredito.app.model.CreditAnalysis;
-import com.midatacredito.app.model.User;
-import com.midatacredito.app.repository.CreditAnalysisRepository;
+import com.radiografiacrediticia.app.dto.AnalysisResult;
+import com.radiografiacrediticia.app.model.CreditAnalysis;
+import com.radiografiacrediticia.app.model.User;
+import com.radiografiacrediticia.app.repository.CreditAnalysisRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;

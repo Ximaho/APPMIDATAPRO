@@ -1,8 +1,8 @@
-package com.midatacredito.app.controller;
+package com.radiografiacrediticia.app.controller;
 
-import com.midatacredito.app.dto.RegistrationForm;
-import com.midatacredito.app.model.User;
-import com.midatacredito.app.repository.UserRepository;
+import com.radiografiacrediticia.app.dto.RegistrationForm;
+import com.radiografiacrediticia.app.model.User;
+import com.radiografiacrediticia.app.repository.UserRepository;
 import jakarta.validation.Valid;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;

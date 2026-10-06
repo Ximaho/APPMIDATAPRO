@@ -1,4 +1,4 @@
-package com.midatacredito.app.model;
+package com.radiografiacrediticia.app.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

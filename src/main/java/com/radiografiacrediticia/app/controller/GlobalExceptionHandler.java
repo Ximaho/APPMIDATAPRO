@@ -1,4 +1,4 @@
-package com.midatacredito.app.controller;
+package com.radiografiacrediticia.app.controller;
 
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;

@@ -11,10 +11,10 @@
         <relativePath/>
     </parent>
 
-    <groupId>com.midatacredito</groupId>
-    <artifactId>midatacredito-app</artifactId>
+    <groupId>com.radiografiacrediticia</groupId>
+    <artifactId>radiografia-crediticia</artifactId>
     <version>1.0.0</version>
-    <name>midatacredito-app</name>
+    <name>radiografia-crediticia</name>
     <description>Análisis de riesgo e historial crediticio con Claude (Anthropic API)</description>
 
     <properties>

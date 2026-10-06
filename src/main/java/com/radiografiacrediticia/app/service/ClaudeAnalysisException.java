@@ -1,4 +1,4 @@
-package com.midatacredito.app.service;
+package com.radiografiacrediticia.app.service;
 
 /**
  * Error controlado durante el análisis con Claude. El mensaje es apto para mostrarse al usuario.

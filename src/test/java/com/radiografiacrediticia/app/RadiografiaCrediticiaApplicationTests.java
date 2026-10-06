@@ -1,9 +1,9 @@
-package com.midatacredito.app;
+package com.radiografiacrediticia.app;
 
-import com.midatacredito.app.model.CreditAnalysis;
-import com.midatacredito.app.model.User;
-import com.midatacredito.app.repository.CreditAnalysisRepository;
-import com.midatacredito.app.repository.UserRepository;
+import com.radiografiacrediticia.app.model.CreditAnalysis;
+import com.radiografiacrediticia.app.model.User;
+import com.radiografiacrediticia.app.repository.CreditAnalysisRepository;
+import com.radiografiacrediticia.app.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -32,7 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "anthropic.api-key="
 })
 @AutoConfigureMockMvc
-class MidatacreditoAppApplicationTests {
+class RadiografiaCrediticiaApplicationTests {
 
     @Autowired
     private MockMvc mvc;

@@ -1,7 +1,7 @@
-package com.midatacredito.app.service;
+package com.radiografiacrediticia.app.service;
 
-import com.midatacredito.app.dto.AnalysisResult;
-import com.midatacredito.app.model.CreditAnalysis;
+import com.radiografiacrediticia.app.dto.AnalysisResult;
+import com.radiografiacrediticia.app.model.CreditAnalysis;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;

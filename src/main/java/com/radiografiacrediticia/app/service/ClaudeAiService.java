@@ -1,9 +1,9 @@
-package com.midatacredito.app.service;
+package com.radiografiacrediticia.app.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.midatacredito.app.dto.AnalysisResult;
+import com.radiografiacrediticia.app.dto.AnalysisResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,7 +28,7 @@ import java.util.Map;
 
 /**
  * Integración con la API de Mensajes de Anthropic (https://api.anthropic.com/v1/messages).
- * El cliente HTTP se configura en {@link com.midatacredito.app.config.AnthropicClientConfig}.
+ * El cliente HTTP se configura en {@link com.radiografiacrediticia.app.config.AnthropicClientConfig}.
  * <p>
  * Envía un mensaje multimodal con:
  * <ol>
