@@ -128,9 +128,36 @@ public class ClaudeAiService {
                            @Value("${anthropic.max-tokens}") int maxTokens) {
         this.restClient = anthropicRestClient;
         this.objectMapper = objectMapper;
-        this.apiKey = apiKey == null ? "" : apiKey.trim();
+        this.apiKey = cleanApiKey(apiKey);
         this.model = model;
         this.maxTokens = maxTokens;
+        if (this.apiKey.isEmpty()) {
+            log.warn("ANTHROPIC_API_KEY no está definida: los análisis fallarán hasta configurarla.");
+        } else {
+            log.info("ANTHROPIC_API_KEY cargada: {} ({} caracteres). Modelo: {}",
+                    maskApiKey(this.apiKey), this.apiKey.length(), model);
+        }
+    }
+
+    /** Quita espacios y comillas que a veces quedan al definir la variable en CMD/PowerShell. */
+    static String cleanApiKey(String apiKey) {
+        if (apiKey == null) {
+            return "";
+        }
+        String key = apiKey.trim();
+        while (key.length() >= 2 && (key.startsWith("\"") || key.startsWith("'"))
+                && (key.endsWith("\"") || key.endsWith("'"))) {
+            key = key.substring(1, key.length() - 1).trim();
+        }
+        return key;
+    }
+
+    /** Muestra solo el inicio y los últimos 4 caracteres, para verificar qué key se cargó sin exponerla. */
+    static String maskApiKey(String apiKey) {
+        if (apiKey.length() <= 16) {
+            return "****";
+        }
+        return apiKey.substring(0, 10) + "…" + apiKey.substring(apiKey.length() - 4);
     }
 
     public String getModel() {

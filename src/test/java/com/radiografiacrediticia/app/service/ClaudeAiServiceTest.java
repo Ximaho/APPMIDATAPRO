@@ -238,4 +238,14 @@ class ClaudeAiServiceTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("responde las preguntas");
     }
+
+    @Test
+    void cleansQuotesAndMasksApiKey() {
+        assertThat(ClaudeAiService.cleanApiKey("  \"sk-ant-api03-abc\"  ")).isEqualTo("sk-ant-api03-abc");
+        assertThat(ClaudeAiService.cleanApiKey("'sk-ant-xyz'")).isEqualTo("sk-ant-xyz");
+        assertThat(ClaudeAiService.cleanApiKey(null)).isEmpty();
+        assertThat(ClaudeAiService.maskApiKey("sk-ant-api03-ABCDEFGHIJKLMNOP-1234"))
+                .isEqualTo("sk-ant-api…1234")
+                .doesNotContain("ABCDEFGH");
+    }
 }
