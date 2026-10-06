@@ -121,6 +121,19 @@ a { color: var(--naranja); }
 }
 .campo::placeholder { color: #b3a49b; }
 .campo:focus { outline: none; border-color: var(--naranja); }
+/* Autorrelleno del navegador: Chrome/Edge pintan el campo de azul pálido y el texto gris.
+   El color de fondo no se puede cambiar directamente, así que se cubre con una sombra interna. */
+.campo:-webkit-autofill,
+.campo:-webkit-autofill:hover,
+.campo:-webkit-autofill:focus,
+.campo:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px var(--durazno) inset;
+    box-shadow: 0 0 0 1000px var(--durazno) inset;
+    -webkit-text-fill-color: var(--negro);
+    caret-color: var(--negro);
+    transition: background-color 9999s ease-in-out 0s;
+}
+.campo:autofill { background: var(--durazno); color: var(--negro); }
 .campo[readonly] { color: var(--gris); cursor: not-allowed; }
 .campo.invalid { border-color: var(--naranja-oscuro); }
 textarea.campo { resize: vertical; min-height: 120px; }
