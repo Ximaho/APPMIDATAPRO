@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Tu radiografía crediticia')}"></head>
+<body>
+<header th:replace="~{fragments :: topbar}"></header>
+
+<main class="contenido">
+    <div class="resultado-cabecera">
+        <div class="encabezado">
+            <span class="logo-tile sm"><img th:src="@{/img/logo-icon.png}" alt="Radiografía Crediticia"></span>
+            <div>
+                <h1 class="titulo">Tu radiografía crediticia</h1>
+                <p class="texto-sec" th:text="'Generada el ' + ${#temporals.format(analysis.createdAt, 'dd/MM/yyyy')}
+                    + ' · ' + ${user.fullName}"></p>
+            </div>
+        </div>
+        <a class="btn btn-secundario" th:href="@{/radiografia/{id}/pdf(id=${analysis.id})}">Descargar PDF</a>
+    </div>
+
+    <section class="panel-puntaje">
+        <div class="valor" th:text="${result.estimatedScore}">650</div>
+        <div class="detalle">
+            <p class="eyebrow">Puntaje estimado (150 – 950)</p>
+            <div class="nivel" th:text="${result.riskLevel()}">Riesgo medio</div>
+            <div class="barra">
+                <span th:style="'width:' + ${(result.estimatedScore - 150) * 100 / 800} + '%'"></span>
+            </div>
+        </div>
+    </section>
+
+    <div class="bloques">
+        <section class="bloque">
+            <h2>Diagnóstico</h2>
+            <p th:text="${result.summary}"></p>
+        </section>
+
+        <section class="bloque">
+            <h2>Problemas detectados</h2>
+            <ul class="lista" th:if="${!result.problems.isEmpty()}">
+                <li th:each="p : ${result.problems}" th:text="${p}"></li>
+            </ul>
+            <p th:if="${result.problems.isEmpty()}">No se detectaron problemas relevantes.</p>
+        </section>
+
+        <section class="bloque">
+            <h2>Tu plan de acción</h2>
+            <ol class="lista-numerada" th:if="${!result.recommendations.isEmpty()}">
+                <li th:each="r : ${result.recommendations}"><span th:text="${r}"></span></li>
+            </ol>
+            <p th:if="${result.recommendations.isEmpty()}">Sin recomendaciones adicionales.</p>
+        </section>
+
+        <section class="bloque" th:if="${!answers.isEmpty()}">
+            <h2>Tus respuestas</h2>
+            <table class="respuestas">
+                <tr th:each="a : ${answers}">
+                    <td th:text="${a.key}"></td>
+                    <td th:text="${a.value}"></td>
+                </tr>
+            </table>
+        </section>
+    </div>
+
+    <p class="aviso">Esta radiografía es una estimación generada por inteligencia artificial. No es un reporte oficial
+        de DataCrédito Experian ni de TransUnion, ni constituye asesoría financiera o legal.</p>
+</main>
+</body>
+</html>

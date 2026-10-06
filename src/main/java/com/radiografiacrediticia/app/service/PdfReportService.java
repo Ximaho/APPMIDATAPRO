@@ -5,13 +5,14 @@ import com.lowagie.text.Document;
 import com.lowagie.text.DocumentException;
 import com.lowagie.text.Element;
 import com.lowagie.text.Font;
-import com.lowagie.text.FontFactory;
+import com.lowagie.text.Image;
 import com.lowagie.text.List;
 import com.lowagie.text.ListItem;
 import com.lowagie.text.PageSize;
 import com.lowagie.text.Paragraph;
 import com.lowagie.text.Phrase;
 import com.lowagie.text.Rectangle;
+import com.lowagie.text.pdf.BaseFont;
 import com.lowagie.text.pdf.ColumnText;
 import com.lowagie.text.pdf.PdfContentByte;
 import com.lowagie.text.pdf.PdfPCell;
@@ -20,81 +21,102 @@ import com.lowagie.text.pdf.PdfPageEventHelper;
 import com.lowagie.text.pdf.PdfWriter;
 import com.radiografiacrediticia.app.dto.AnalysisResult;
 import com.radiografiacrediticia.app.model.CreditAnalysis;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
 import java.awt.Color;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.time.format.DateTimeFormatter;
+import java.util.Map;
 
 /**
- * Genera en memoria el informe PDF de un análisis crediticio usando OpenPDF.
- * Estructura: encabezado, datos del usuario, puntaje estimado con nivel de riesgo,
- * resumen, problemas detectados, recomendaciones y aviso legal.
+ * Genera en memoria el informe PDF de una radiografía con la identidad visual de la marca:
+ * fondo crema, encabezado naranja con el logotipo y tipografía Chopin.
  */
 @Service
 public class PdfReportService {
 
-    private static final Color PRIMARY = new Color(0x1E, 0x3A, 0x8A);
-    private static final Color MUTED = new Color(0x6B, 0x72, 0x80);
-    private static final Color LIGHT_BG = new Color(0xF3, 0xF4, 0xF6);
-    private static final Color DANGER = new Color(0xB9, 0x1C, 0x1C);
-    private static final Color SUCCESS = new Color(0x04, 0x78, 0x57);
+    private static final Color NARANJA = new Color(0xF6, 0x66, 0x4C);
+    private static final Color CREMA = new Color(0xF1, 0xE8, 0xE1);
+    private static final Color DURAZNO = new Color(0xF6, 0xE2, 0xD1);
+    private static final Color NEGRO = Color.BLACK;
+    private static final Color GRIS = new Color(0x5C, 0x52, 0x4D);
 
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
-    private final Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 20, Color.WHITE);
-    private final Font subtitleFont = FontFactory.getFont(FontFactory.HELVETICA, 10, Color.WHITE);
-    private final Font sectionFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 13, PRIMARY);
-    private final Font bodyFont = FontFactory.getFont(FontFactory.HELVETICA, 10.5f, Color.DARK_GRAY);
-    private final Font labelFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, MUTED);
-    private final Font smallFont = FontFactory.getFont(FontFactory.HELVETICA_OBLIQUE, 8.5f, MUTED);
+    private final BaseFont regular;
+    private final BaseFont bold;
+    private final byte[] wordmark;
+
+    public PdfReportService() {
+        this.regular = loadFont("static/fonts/Chopin-Medium.otf");
+        this.bold = loadFont("static/fonts/Chopin-ExtraBold.otf");
+        this.wordmark = readResource("static/img/logo-wordmark.png");
+    }
 
     /**
-     * @param analysis  entidad con los metadatos del análisis
-     * @param result    resultado estructurado (puntaje, resumen, problemas, recomendaciones)
-     * @param userName  nombre a mostrar en el informe
+     * @param analysis       entidad con los metadatos del análisis
+     * @param result         resultado estructurado (puntaje, resumen, problemas, plan de acción)
+     * @param userName       nombre a mostrar
+     * @param identification documento de identidad del titular (puede ser nulo)
+     * @param answers        respuestas del cuestionario (puede estar vacío)
      * @return bytes del PDF generado
      */
-    public byte[] generateReport(CreditAnalysis analysis, AnalysisResult result, String userName) {
+    public byte[] generateReport(CreditAnalysis analysis, AnalysisResult result, String userName,
+                                 String identification, Map<String, String> answers) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        Document document = new Document(PageSize.A4, 48, 48, 48, 56);
+        Document document = new Document(PageSize.A4, 48, 48, 40, 56);
         try {
             PdfWriter writer = PdfWriter.getInstance(document, out);
-            writer.setPageEvent(new FooterEvent());
-            document.addTitle("Informe de análisis crediticio");
+            writer.setPageEvent(new BrandPageEvent());
+            document.addTitle("Radiografía crediticia");
             document.addAuthor("Radiografía Crediticia");
             document.addCreator("Radiografía Crediticia");
             document.open();
 
             addHeader(document, analysis);
-            addUserInfo(document, analysis, userName);
+            addUserInfo(document, analysis, userName, identification);
             addScore(document, result);
 
-            addSectionTitle(document, "Resumen del diagnóstico");
-            Paragraph summary = new Paragraph(result.summary(), bodyFont);
+            addSectionTitle(document, "Diagnóstico");
+            Paragraph summary = new Paragraph(result.summary(), font(regular, 10.5f, NEGRO));
             summary.setLeading(15f);
             summary.setAlignment(Element.ALIGN_JUSTIFIED);
             document.add(summary);
 
             addSectionTitle(document, "Problemas detectados");
-            addBulletList(document, result.problems(), DANGER, "No se detectaron problemas relevantes.");
+            addBulletList(document, result.problems(), "No se detectaron problemas relevantes.");
 
-            addSectionTitle(document, "Recomendaciones de mejora");
-            addBulletList(document, result.recommendations(), SUCCESS, "Sin recomendaciones adicionales.");
+            addSectionTitle(document, "Tu plan de acción");
+            addBulletList(document, result.recommendations(), "Sin recomendaciones adicionales.");
 
-            addSectionTitle(document, "Actividad económica reportada");
-            Paragraph activity = new Paragraph(analysis.getActivityDescription(), bodyFont);
+            addSectionTitle(document, "Lo que nos contaste");
+            Paragraph activity = new Paragraph(analysis.getActivityDescription(), font(regular, 10f, NEGRO));
             activity.setLeading(14f);
             document.add(activity);
 
+            if (answers != null && !answers.isEmpty()) {
+                addSectionTitle(document, "Tus respuestas");
+                PdfPTable table = new PdfPTable(new float[]{3f, 1.3f});
+                table.setWidthPercentage(100);
+                answers.forEach((question, answer) -> {
+                    table.addCell(infoCell(question, font(regular, 9.5f, NEGRO)));
+                    table.addCell(infoCell(answer, font(bold, 9.5f, NARANJA)));
+                });
+                document.add(table);
+            }
+
             Paragraph disclaimer = new Paragraph(
-                    "Aviso: este informe es una estimación generada por inteligencia artificial a partir de la "
+                    "Aviso: esta radiografía es una estimación generada por inteligencia artificial a partir de la "
                             + "información suministrada por el usuario. No es un reporte oficial de DataCrédito Experian "
-                            + "ni constituye asesoría financiera o legal. El puntaje real puede diferir.",
-                    smallFont);
+                            + "ni de TransUnion, ni constituye asesoría financiera o legal. El puntaje real puede diferir.",
+                    font(regular, 8f, GRIS));
             disclaimer.setSpacingBefore(24f);
             document.add(disclaimer);
-        } catch (DocumentException e) {
+        } catch (DocumentException | IOException e) {
             throw new IllegalStateException("No fue posible generar el informe PDF", e);
         } finally {
             if (document.isOpen()) {
@@ -104,80 +126,98 @@ public class PdfReportService {
         return out.toByteArray();
     }
 
-    private void addHeader(Document document, CreditAnalysis analysis) throws DocumentException {
-        PdfPTable header = new PdfPTable(1);
+    private void addHeader(Document document, CreditAnalysis analysis) throws DocumentException, IOException {
+        PdfPTable header = new PdfPTable(new float[]{1.6f, 1f});
         header.setWidthPercentage(100);
 
-        PdfPCell cell = new PdfPCell();
-        cell.setBackgroundColor(PRIMARY);
-        cell.setBorder(Rectangle.NO_BORDER);
-        cell.setPadding(16f);
-        cell.addElement(new Paragraph("Informe de Análisis Crediticio", titleFont));
+        Image logo = Image.getInstance(wordmark);
+        logo.scaleToFit(210, 60);
+        PdfPCell logoCell = new PdfPCell(logo, false);
+        logoCell.setBackgroundColor(NARANJA);
+        logoCell.setBorder(Rectangle.NO_BORDER);
+        logoCell.setPadding(16f);
+        logoCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        header.addCell(logoCell);
+
+        PdfPCell meta = new PdfPCell();
+        meta.setBackgroundColor(NARANJA);
+        meta.setBorder(Rectangle.NO_BORDER);
+        meta.setPadding(16f);
+        meta.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        Paragraph title = new Paragraph("Tu radiografía crediticia", font(bold, 12, CREMA));
+        title.setAlignment(Element.ALIGN_RIGHT);
+        meta.addElement(title);
         String date = analysis.getCreatedAt() != null ? analysis.getCreatedAt().format(DATE_FORMAT) : "";
-        cell.addElement(new Paragraph("Consulta N.º " + analysis.getId() + "  ·  " + date, subtitleFont));
-        header.addCell(cell);
+        Paragraph sub = new Paragraph("N.º " + analysis.getId() + "  ·  " + date, font(regular, 9, CREMA));
+        sub.setAlignment(Element.ALIGN_RIGHT);
+        meta.addElement(sub);
+        header.addCell(meta);
 
         header.setSpacingAfter(14f);
         document.add(header);
     }
 
-    private void addUserInfo(Document document, CreditAnalysis analysis, String userName) throws DocumentException {
+    private void addUserInfo(Document document, CreditAnalysis analysis, String userName, String identification)
+            throws DocumentException {
         PdfPTable info = new PdfPTable(new float[]{1.2f, 3f});
         info.setWidthPercentage(100);
         addInfoRow(info, "Titular", userName);
-        Integer count = analysis.getImageCount();
-        addInfoRow(info, count != null && count > 1 ? "Capturas analizadas (" + count + ")" : "Captura analizada",
-                analysis.getImageFileNames());
-        addInfoRow(info, "Modelo de IA", analysis.getModelUsed());
+        addInfoRow(info, "Identificación", identification);
+        int count = analysis.getImageCount() == null ? 0 : analysis.getImageCount();
+        java.util.List<String> sources = new java.util.ArrayList<>();
+        if (count > 0) {
+            sources.add(count + " captura(s): " + analysis.getImageFileNames());
+        }
+        if (analysis.getQuestionnaireJson() != null) {
+            sources.add("cuestionario");
+        }
+        addInfoRow(info, "Fuentes", String.join(" + ", sources));
         info.setSpacingAfter(12f);
         document.add(info);
     }
 
     private void addInfoRow(PdfPTable table, String label, String value) {
-        PdfPCell labelCell = new PdfPCell(new Phrase(label, labelFont));
-        labelCell.setBorder(Rectangle.BOTTOM);
-        labelCell.setBorderColor(LIGHT_BG);
-        labelCell.setPadding(5f);
-        table.addCell(labelCell);
+        table.addCell(infoCell(label, font(bold, 9.5f, NARANJA)));
+        table.addCell(infoCell(value == null || value.isBlank() ? "-" : value, font(regular, 10, NEGRO)));
+    }
 
-        PdfPCell valueCell = new PdfPCell(new Phrase(value == null ? "-" : value, bodyFont));
-        valueCell.setBorder(Rectangle.BOTTOM);
-        valueCell.setBorderColor(LIGHT_BG);
-        valueCell.setPadding(5f);
-        table.addCell(valueCell);
+    private PdfPCell infoCell(String text, Font font) {
+        PdfPCell cell = new PdfPCell(new Phrase(text, font));
+        cell.setBorder(Rectangle.BOTTOM);
+        cell.setBorderColor(DURAZNO);
+        cell.setBorderWidth(1f);
+        cell.setPadding(6f);
+        return cell;
     }
 
     private void addScore(Document document, AnalysisResult result) throws DocumentException {
-        Color scoreColor = scoreColor(result.estimatedScore());
-
         PdfPTable box = new PdfPTable(new float[]{1f, 2f});
         box.setWidthPercentage(100);
 
         PdfPCell scoreCell = new PdfPCell();
-        scoreCell.setBackgroundColor(LIGHT_BG);
+        scoreCell.setBackgroundColor(DURAZNO);
         scoreCell.setBorder(Rectangle.NO_BORDER);
         scoreCell.setPadding(14f);
-        scoreCell.setHorizontalAlignment(Element.ALIGN_CENTER);
-        Paragraph score = new Paragraph(String.valueOf(result.estimatedScore()),
-                FontFactory.getFont(FontFactory.HELVETICA_BOLD, 36, scoreColor));
+        Paragraph score = new Paragraph(String.valueOf(result.estimatedScore()), font(bold, 38, NARANJA));
         score.setAlignment(Element.ALIGN_CENTER);
         scoreCell.addElement(score);
-        Paragraph range = new Paragraph("de " + AnalysisResult.MIN_SCORE + " a " + AnalysisResult.MAX_SCORE, labelFont);
+        Paragraph range = new Paragraph("de " + AnalysisResult.MIN_SCORE + " a " + AnalysisResult.MAX_SCORE,
+                font(regular, 9, GRIS));
         range.setAlignment(Element.ALIGN_CENTER);
         scoreCell.addElement(range);
         box.addCell(scoreCell);
 
         PdfPCell levelCell = new PdfPCell();
-        levelCell.setBackgroundColor(LIGHT_BG);
+        levelCell.setBackgroundColor(DURAZNO);
         levelCell.setBorder(Rectangle.NO_BORDER);
         levelCell.setPadding(14f);
         levelCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
-        levelCell.addElement(new Paragraph("Puntaje crediticio estimado", labelFont));
-        levelCell.addElement(new Paragraph(result.riskLevel(),
-                FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16, scoreColor)));
+        levelCell.addElement(new Paragraph("PUNTAJE ESTIMADO", font(regular, 9, NARANJA)));
+        levelCell.addElement(new Paragraph(result.riskLevel(), font(bold, 17, NARANJA)));
         levelCell.addElement(new Paragraph(
                 result.problems().size() + " problema(s) detectado(s) · "
-                        + result.recommendations().size() + " recomendación(es)", bodyFont));
+                        + result.recommendations().size() + " paso(s) en tu plan de acción",
+                font(regular, 10, NEGRO)));
         box.addCell(levelCell);
 
         box.setSpacingAfter(6f);
@@ -185,23 +225,23 @@ public class PdfReportService {
     }
 
     private void addSectionTitle(Document document, String title) throws DocumentException {
-        Paragraph p = new Paragraph(title, sectionFont);
+        Paragraph p = new Paragraph(title, font(bold, 13, NARANJA));
         p.setSpacingBefore(14f);
         p.setSpacingAfter(6f);
         document.add(p);
     }
 
-    private void addBulletList(Document document, java.util.List<String> items, Color bulletColor, String emptyText)
+    private void addBulletList(Document document, java.util.List<String> items, String emptyText)
             throws DocumentException {
         if (items.isEmpty()) {
-            document.add(new Paragraph(emptyText, bodyFont));
+            document.add(new Paragraph(emptyText, font(regular, 10.5f, NEGRO)));
             return;
         }
         List list = new List(List.UNORDERED);
-        list.setListSymbol(new Chunk("•  ", FontFactory.getFont(FontFactory.HELVETICA_BOLD, 11, bulletColor)));
+        list.setListSymbol(new Chunk("•  ", font(bold, 11, NARANJA)));
         list.setIndentationLeft(8f);
         for (String item : items) {
-            ListItem li = new ListItem(item, bodyFont);
+            ListItem li = new ListItem(item, font(regular, 10.5f, NEGRO));
             li.setLeading(14f);
             li.setSpacingAfter(3f);
             list.add(li);
@@ -209,22 +249,43 @@ public class PdfReportService {
         document.add(list);
     }
 
-    private static Color scoreColor(int score) {
-        if (score >= 700) {
-            return SUCCESS;
-        } else if (score >= 550) {
-            return new Color(0xB4, 0x53, 0x09);
-        }
-        return DANGER;
+    private static Font font(BaseFont base, float size, Color color) {
+        return new Font(base, size, Font.NORMAL, color);
     }
 
-    /** Pie de página con numeración. */
-    private class FooterEvent extends PdfPageEventHelper {
+    private static BaseFont loadFont(String path) {
+        try {
+            byte[] bytes = readResource(path);
+            String name = path.substring(path.lastIndexOf('/') + 1);
+            return BaseFont.createFont(name, BaseFont.IDENTITY_H, BaseFont.EMBEDDED, true, bytes, null);
+        } catch (DocumentException | IOException e) {
+            throw new IllegalStateException("No se pudo cargar la fuente " + path, e);
+        }
+    }
+
+    private static byte[] readResource(String path) {
+        try (InputStream in = new ClassPathResource(path).getInputStream()) {
+            return in.readAllBytes();
+        } catch (IOException e) {
+            throw new UncheckedIOException("No se encontró el recurso " + path, e);
+        }
+    }
+
+    /** Fondo crema en cada página y pie con numeración. */
+    private class BrandPageEvent extends PdfPageEventHelper {
         @Override
         public void onEndPage(PdfWriter writer, Document document) {
-            PdfContentByte cb = writer.getDirectContent();
-            Phrase footer = new Phrase("Radiografía Crediticia  ·  Página " + writer.getPageNumber(), smallFont);
-            ColumnText.showTextAligned(cb, Element.ALIGN_CENTER, footer,
+            PdfContentByte under = writer.getDirectContentUnder();
+            under.saveState();
+            under.setColorFill(CREMA);
+            Rectangle page = document.getPageSize();
+            under.rectangle(0, 0, page.getWidth(), page.getHeight());
+            under.fill();
+            under.restoreState();
+
+            Phrase footer = new Phrase("Radiografía Crediticia  ·  Página " + writer.getPageNumber(),
+                    font(regular, 8, NARANJA));
+            ColumnText.showTextAligned(writer.getDirectContent(), Element.ALIGN_CENTER, footer,
                     (document.left() + document.right()) / 2, document.bottom() - 24, 0);
         }
     }

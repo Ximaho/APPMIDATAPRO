@@ -70,7 +70,7 @@ class ClaudeAiServiceTest {
 
         MockMultipartFile page1 = new MockMultipartFile("images", "reporte-1.png", "image/png", PNG_BYTES);
         MockMultipartFile page2 = new MockMultipartFile("images", "reporte-2.jpg", "image/jpeg", JPEG_BYTES);
-        AnalysisResult result = service.analyze(List.of(page1, page2), "Trabajo independiente, ingresos estables.");
+        AnalysisResult result = service.analyze(List.of(page1, page2), "Trabajo independiente, ingresos estables.", "");
 
         server.verify();
         assertThat(result.estimatedScore()).isEqualTo(612);
@@ -92,7 +92,7 @@ class ClaudeAiServiceTest {
     @Test
     void rejectsNonImageFiles() {
         MockMultipartFile pdf = new MockMultipartFile("image", "doc.png", "image/png", "%PDF-1.4".getBytes());
-        assertThatThrownBy(() -> service.analyze(List.of(pdf), "descripcion"))
+        assertThatThrownBy(() -> service.analyze(List.of(pdf), "descripcion", ""))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("PNG o JPEG");
     }
@@ -100,7 +100,7 @@ class ClaudeAiServiceTest {
     @Test
     void rejectsEmptyDescription() {
         MockMultipartFile image = new MockMultipartFile("image", "r.png", "image/png", PNG_BYTES);
-        assertThatThrownBy(() -> service.analyze(List.of(image), "   "))
+        assertThatThrownBy(() -> service.analyze(List.of(image), "   ", ""))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -112,7 +112,7 @@ class ClaudeAiServiceTest {
                         .body("{\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"}}"));
 
         MockMultipartFile image = new MockMultipartFile("image", "r.png", "image/png", PNG_BYTES);
-        assertThatThrownBy(() -> service.analyze(List.of(image), "descripcion"))
+        assertThatThrownBy(() -> service.analyze(List.of(image), "descripcion", ""))
                 .isInstanceOf(ClaudeAnalysisException.class)
                 .hasMessageContaining("ANTHROPIC_API_KEY");
     }
@@ -123,7 +123,7 @@ class ClaudeAiServiceTest {
                 .andRespond(withSuccess("{\"stop_reason\":\"refusal\",\"content\":[]}", MediaType.APPLICATION_JSON));
 
         MockMultipartFile image = new MockMultipartFile("image", "r.png", "image/png", PNG_BYTES);
-        assertThatThrownBy(() -> service.analyze(List.of(image), "descripcion"))
+        assertThatThrownBy(() -> service.analyze(List.of(image), "descripcion", ""))
                 .isInstanceOf(ClaudeAnalysisException.class);
     }
 
@@ -131,7 +131,7 @@ class ClaudeAiServiceTest {
     void failsFastWithoutApiKey() {
         ClaudeAiService noKey = new ClaudeAiService(RestClient.create(), new ObjectMapper(), "", "m", 100);
         MockMultipartFile image = new MockMultipartFile("image", "r.png", "image/png", PNG_BYTES);
-        assertThatThrownBy(() -> noKey.analyze(List.of(image), "descripcion"))
+        assertThatThrownBy(() -> noKey.analyze(List.of(image), "descripcion", ""))
                 .isInstanceOf(ClaudeAnalysisException.class)
                 .hasMessageContaining("ANTHROPIC_API_KEY");
     }
@@ -140,7 +140,7 @@ class ClaudeAiServiceTest {
     void rejectsMoreThanMaxImages() {
         MockMultipartFile image = new MockMultipartFile("images", "r.png", "image/png", PNG_BYTES);
         List<MockMultipartFile> tooMany = Collections.nCopies(ClaudeAiService.MAX_IMAGES + 1, image);
-        assertThatThrownBy(() -> service.analyze(List.copyOf(tooMany), "descripcion"))
+        assertThatThrownBy(() -> service.analyze(List.copyOf(tooMany), "descripcion", ""))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("máximo " + ClaudeAiService.MAX_IMAGES);
     }
@@ -150,7 +150,7 @@ class ClaudeAiServiceTest {
         byte[] big = new byte[(int) ClaudeAiService.MAX_IMAGE_BYTES - 10];
         System.arraycopy(PNG_BYTES, 0, big, 0, PNG_BYTES.length);
         MockMultipartFile image = new MockMultipartFile("images", "big.png", "image/png", big);
-        assertThatThrownBy(() -> service.analyze(List.of(image, image, image, image, image), "descripcion"))
+        assertThatThrownBy(() -> service.analyze(List.of(image, image, image, image, image), "descripcion", ""))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("20 MB");
     }
@@ -158,7 +158,7 @@ class ClaudeAiServiceTest {
     @Test
     void rejectsEmptySelection() {
         MockMultipartFile empty = new MockMultipartFile("images", "", "application/octet-stream", new byte[0]);
-        assertThatThrownBy(() -> service.analyze(List.of(empty), "descripcion"))
+        assertThatThrownBy(() -> service.analyze(List.of(empty), "descripcion", ""))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("al menos una captura");
     }
@@ -168,7 +168,7 @@ class ClaudeAiServiceTest {
         ClaudeAiService noKey = new ClaudeAiService(RestClient.create(), new ObjectMapper(), "", "m", 100);
         MockMultipartFile good = new MockMultipartFile("images", "ok.png", "image/png", PNG_BYTES);
         MockMultipartFile fake = new MockMultipartFile("images", "falso.png", "image/png", "%PDF-1.4".getBytes());
-        assertThatThrownBy(() -> noKey.analyze(List.of(good, fake), "descripcion"))
+        assertThatThrownBy(() -> noKey.analyze(List.of(good, fake), "descripcion", ""))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("falso.png");
     }
@@ -181,7 +181,7 @@ class ClaudeAiServiceTest {
                         .body("{\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"detalle de prueba\"}}"));
 
         MockMultipartFile image = new MockMultipartFile("image", "r.png", "image/png", PNG_BYTES);
-        assertThatThrownBy(() -> service.analyze(List.of(image), "descripcion"))
+        assertThatThrownBy(() -> service.analyze(List.of(image), "descripcion", ""))
                 .isInstanceOf(ClaudeAnalysisException.class)
                 .hasMessageContaining("detalle de prueba");
     }
@@ -194,7 +194,7 @@ class ClaudeAiServiceTest {
         javax.imageio.ImageIO.write(tall, "png", out);
         MockMultipartFile image = new MockMultipartFile("images", "pagina-completa.png", "image/png", out.toByteArray());
 
-        assertThatThrownBy(() -> service.analyze(List.of(image), "descripcion"))
+        assertThatThrownBy(() -> service.analyze(List.of(image), "descripcion", ""))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("8100");
     }
@@ -207,8 +207,35 @@ class ClaudeAiServiceTest {
                         .body("{\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.\"}}"));
 
         MockMultipartFile image = new MockMultipartFile("image", "r.png", "image/png", PNG_BYTES);
-        assertThatThrownBy(() -> service.analyze(List.of(image), "descripcion"))
+        assertThatThrownBy(() -> service.analyze(List.of(image), "descripcion", ""))
                 .isInstanceOf(ClaudeAnalysisException.class)
                 .hasMessageContaining("no tiene saldo suficiente");
+    }
+
+    @Test
+    void sendsQuestionnaireOnlyRequestWithoutImages() {
+        String apiResponse = """
+                {"stop_reason": "end_turn", "content": [{"type": "text", "text": "{\\"estimated_score\\": 540, \\"summary\\": \\"Estimación sin reporte\\", \\"problems\\": [], \\"recommendations\\": [\\"Ponerse al día\\"]}"}]}
+                """;
+        server.expect(requestTo("https://api.anthropic.com/v1/messages"))
+                .andExpect(jsonPath("$.messages[0].content.length()").value(1))
+                .andExpect(jsonPath("$.messages[0].content[0].text",
+                        org.hamcrest.Matchers.containsString("<cuestionario>")))
+                .andExpect(jsonPath("$.messages[0].content[0].text",
+                        org.hamcrest.Matchers.containsString("No tengo acceso a las capturas")))
+                .andRespond(withSuccess(apiResponse, MediaType.APPLICATION_JSON));
+
+        AnalysisResult result = service.analyze(List.of(), "Estuve en mora pero ya pagué",
+                "- ¿Has estado en mora en los últimos 12 meses? Sí, pero ya pagué");
+
+        server.verify();
+        assertThat(result.estimatedScore()).isEqualTo(540);
+    }
+
+    @Test
+    void rejectsRequestWithoutImagesNorQuestionnaire() {
+        assertThatThrownBy(() -> service.analyze(List.of(), "descripcion", "  "))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("responde las preguntas");
     }
 }

@@ -33,14 +33,14 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
-                        .requestMatchers("/login", "/register", "/css/**", "/js/**", "/images/**", "/error").permitAll()
+                        .requestMatchers("/login", "/register", "/css/**", "/js/**", "/img/**", "/fonts/**", "/error").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
                         .anyRequest().authenticated())
                 .formLogin(form -> form
                         .loginPage("/login")
                         .usernameParameter("email")
                         .passwordParameter("password")
-                        .defaultSuccessUrl("/dashboard", true)
+                        .defaultSuccessUrl("/inicio", true)
                         .failureUrl("/login?error")
                         .permitAll())
                 .logout(logout -> logout

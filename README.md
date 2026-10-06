@@ -4,10 +4,29 @@ Aplicación web en **Java 17 + Spring Boot 3.5** para analizar el riesgo y el hi
 una o varias capturas de pantalla de **MiDataCrédito (Colombia)** y la descripción de la actividad económica del usuario,
 usando la **API de Claude (Anthropic)**.
 
+## Identidad visual
+
+- Colores: naranja `#f6664c`, crema `#f1e8e1`, negro `#000000` (y un durazno `#f6e2d1` para campos y tarjetas).
+- Logo: `src/main/resources/static/img/` (`logo-icon.png`, `favicon.png`, `logo-wordmark.png` para el PDF).
+- Tipografías en `src/main/resources/static/fonts/`:
+  - **Chopin** (Medium y ExtraBold) para textos, también incrustada en el PDF. Es una versión *Trial*:
+    revisa su licencia antes de usarla comercialmente.
+  - **Morphling** para títulos: aún no está en el proyecto. Copia `Morphling-Regular.otf` en esa carpeta y
+    quita el comentario del bloque `@font-face` de Morphling en `static/css/styles.css`. Mientras tanto se usa
+    **DM Serif Display** (licencia OFL, incluida).
+
+## Reglas de negocio
+
+- **Una radiografía por mes calendario** por usuario. Para pruebas se desactiva con `LIMITE_MENSUAL=false`.
+- La **identificación** queda ligada a la cuenta con la primera radiografía exitosa y no se puede cambiar; una
+  misma identificación no puede estar en dos cuentas.
+- Se puede generar con **capturas**, con el **cuestionario** completo (si no hay capturas) o con ambos.
+
 ## Flujo
 
 1. El usuario se registra (`/register`) e inicia sesión (`/login`).
-2. En el **Dashboard** (`/dashboard`) carga de 1 a 10 capturas PNG/JPEG de su reporte y describe sus actividades económicas.
+2. En **Inicio** (`/inicio`) entra a *Radiografía de perfil* (`/radiografia/nueva`): sube de 0 a 10 capturas PNG/JPEG,
+   responde el cuestionario si no tiene capturas, y cuenta qué ha pasado con su vida crediticia.
 3. Las imágenes se codifican en **Base64** y se envían a `https://api.anthropic.com/v1/messages` en un único
    mensaje multimodal (un bloque `image` numerado por captura + un bloque `text` con el prompt).
 4. Claude responde con un JSON estructurado: `estimated_score` (150–950), `summary`, `problems` y `recommendations`.
@@ -22,10 +41,11 @@ src/main/java/com/radiografiacrediticia/app/
 │   └── AnthropicClientConfig.java   # RestClient para la API de Anthropic (URL base, versión, timeouts)
 ├── controller/
 │   ├── AuthController.java          # Login y registro
-│   ├── DashboardController.java     # Carga de imagen, análisis con IA, historial y descarga de PDF
+│   ├── DashboardController.java     # Inicio, formulario de radiografía, resultado, historial y PDF
 │   └── GlobalExceptionHandler.java  # Errores de carga de archivos → mensajes amigables
 ├── dto/
 │   ├── AnalysisResult.java          # Resultado estructurado devuelto por Claude
+│   ├── Questionnaire.java           # Preguntas alternativas a las capturas
 │   └── RegistrationForm.java        # Formulario de registro con validaciones
 ├── model/
 │   ├── User.java                    # Entidad usuario (contraseña con hash BCrypt)
@@ -42,7 +62,7 @@ src/main/java/com/radiografiacrediticia/app/
 └── RadiografiaCrediticiaApplication.java
 
 src/main/resources/
-├── templates/  (login.html, register.html, dashboard.html)
+├── templates/  (login, register, inicio, radiografia-nueva, radiografia, fragments)
 ├── static/css/styles.css
 ├── application.properties           # H2, puerto, multipart y configuración de Anthropic
 └── application-postgres.properties  # Perfil opcional para PostgreSQL
@@ -136,7 +156,7 @@ mvn spring-boot:run
 
 - Contraseñas con `BCryptPasswordEncoder`.
 - Protección CSRF activa en todos los formularios (Thymeleaf inserta el token automáticamente).
-- `/login`, `/register` y los recursos estáticos son públicos; `/`, `/dashboard` y el resto requieren sesión.
+- `/login`, `/register` y los recursos estáticos son públicos; `/inicio`, `/radiografia/**` y el resto requieren sesión.
 - Cada usuario solo puede ver y descargar sus propios análisis.
 - Cada imagen se valida por su firma binaria (PNG/JPEG), no solo por la extensión.
 - Límites: hasta 10 capturas por análisis, 5 MB cada una y 20 MB en total (así la solicitud queda bajo el

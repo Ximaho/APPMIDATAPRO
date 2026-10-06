@@ -31,6 +31,10 @@ public class User {
     @Column(nullable = false, length = 100)
     private String password;
 
+    /** Documento de identidad. Se fija con la primera radiografía y luego no se puede cambiar. */
+    @Column(unique = true, length = 20)
+    private String identification;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -74,6 +78,14 @@ public class User {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getIdentification() {
+        return identification;
+    }
+
+    public void setIdentification(String identification) {
+        this.identification = identification;
     }
 
     public LocalDateTime getCreatedAt() {

@@ -40,6 +40,10 @@ public class CreditAnalysis {
     @Column(name = "image_count")
     private Integer imageCount;
 
+    /** Respuestas del cuestionario (objeto JSON pregunta → respuesta); vacío si no se respondió. */
+    @Column(name = "questionnaire_json", length = 4000)
+    private String questionnaireJson;
+
     @Column(name = "estimated_score", nullable = false)
     private Integer estimatedScore;
 
@@ -89,6 +93,14 @@ public class CreditAnalysis {
 
     public void setImageFileNames(String imageFileNames) {
         this.imageFileNames = imageFileNames;
+    }
+
+    public String getQuestionnaireJson() {
+        return questionnaireJson;
+    }
+
+    public void setQuestionnaireJson(String questionnaireJson) {
+        this.questionnaireJson = questionnaireJson;
     }
 
     public Integer getImageCount() {

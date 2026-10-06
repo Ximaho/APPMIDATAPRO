@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f6664c">
+    <title th:text="${title} + ' · Radiografía Crediticia'">Radiografía Crediticia</title>
+    <link rel="icon" type="image/png" th:href="@{/img/favicon.png}">
+    <link rel="preload" th:href="@{/fonts/Chopin-Medium.otf}" as="font" type="font/otf" crossorigin>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+
+<header th:fragment="topbar" class="topbar">
+    <a th:href="@{/inicio}" class="logo-tile xs" aria-label="Inicio">
+        <img th:src="@{/img/logo-icon.png}" alt="Radiografía Crediticia">
+    </a>
+    <nav class="topbar-links">
+        <span class="nombre" th:text="${user.fullName}">Usuario</span>
+        <a th:href="@{/inicio}">Inicio</a>
+        <form th:action="@{/logout}" method="post">
+            <button type="submit" class="link-btn">Cerrar sesión</button>
+        </form>
+    </nav>
+</header>
+
+<div th:fragment="alertas">
+    <div th:if="${error}" class="alerta alerta-error" role="alert" th:text="${error}"></div>
+    <div th:if="${info}" class="alerta alerta-info" role="status" th:text="${info}"></div>
+    <div th:if="${success}" class="alerta alerta-exito" role="status" th:text="${success}"></div>
+</div>
+
+</body>
+</html>

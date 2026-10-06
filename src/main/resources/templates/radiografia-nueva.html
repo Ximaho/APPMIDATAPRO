@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Tu radiografía crediticia')}"></head>
+<body>
+<header th:replace="~{fragments :: topbar}"></header>
+
+<main class="contenido">
+    <div class="encabezado">
+        <span class="logo-tile"><img th:src="@{/img/logo-icon.png}" alt="Radiografía Crediticia"></span>
+        <h1 class="titulo">Tu radiografía crediticia</h1>
+    </div>
+    <p>Sube tus capturas y/o contesta las preguntas y recibe tu radiografía del mes.
+        Solo puedes generar una radiografía por mes.</p>
+
+    <div class="col" th:insert="~{fragments :: alertas}"></div>
+
+    <form id="radiografia-form" class="form form-radiografia" th:action="@{/radiografia}" method="post"
+          enctype="multipart/form-data">
+        <div class="col">
+            <label class="label-fuerte" for="fullName">Tu nombre completo</label>
+            <input class="campo" type="text" id="fullName" name="fullName" th:value="${fullName}"
+                   required maxlength="120" autocomplete="name">
+
+            <label class="label-fuerte" for="identification">Identificación</label>
+            <th:block th:if="${user.identification != null}">
+                <input class="campo" type="text" id="identification" th:value="${user.identification}" readonly>
+                <p class="ayuda">Tu cuenta ya quedó ligada a este usuario — no se puede cambiar.</p>
+            </th:block>
+            <th:block th:if="${user.identification == null}">
+                <input class="campo" type="text" id="identification" name="identification"
+                       th:value="${identification}" required maxlength="25" inputmode="text"
+                       placeholder="Número de documento">
+                <p class="ayuda">Al generar tu primera radiografía, este documento queda ligado a tu cuenta y no se
+                    podrá cambiar. Revísalo bien.</p>
+            </th:block>
+
+            <label class="label-fuerte" for="description">¿Qué ha pasado con tu vida crediticia?</label>
+            <textarea class="campo" id="description" name="description" rows="4" required
+                      th:attr="maxlength=${maxDescriptionChars}" th:text="${description}"
+                      placeholder="Ej: Tengo reportes negativos con entidades como… / Estuve en mora pero ya pagué…"></textarea>
+            <p class="ayuda">Con tus propias palabras — esto es lo que usamos para que tu radiografía hable de tu vida
+                crediticia y no solo de lo que aparece en las fotos.</p>
+        </div>
+
+        <section class="seccion">
+            <span class="label label-fuerte">Capturas</span>
+            <div class="carga">
+                <input type="file" id="images" name="images" accept="image/png,image/jpeg" multiple
+                       aria-describedby="ayuda-capturas">
+                <small id="ayuda-capturas" class="ayuda sec">
+                    De MiDataCrédito y/o TransUnion. Hasta <span th:text="${maxImages}">10</span> imágenes PNG o JPEG,
+                    máx. 5 MB cada una. Puedes seleccionar varias a la vez.
+                </small>
+                <div id="previews" class="previews hidden"></div>
+            </div>
+        </section>
+
+        <section class="seccion">
+            <span class="label label-fuerte">Preguntas</span>
+            <p class="ayuda sec col">Si no tienes acceso a tus capturas, responde todas las preguntas. Si subes
+                capturas, responderlas es opcional pero hace tu radiografía más precisa.</p>
+            <div class="preguntas">
+                <fieldset class="pregunta" th:each="q : ${questions}">
+                    <legend th:text="${q.text}">Pregunta</legend>
+                    <div class="opciones">
+                        <label class="opcion" th:each="opt : ${q.options}">
+                            <input type="radio" th:name="${q.paramName()}" th:value="${opt}"
+                                   th:checked="${selected[q.id] == opt}">
+                            <span th:text="${opt}">Opción</span>
+                        </label>
+                    </div>
+                </fieldset>
+            </div>
+        </section>
+
+        <button type="submit" id="submit-btn" class="btn btn-primario btn-bloque">Radiografía de mi perfil</button>
+        <p id="cargando" class="cargando hidden">Estamos preparando tu radiografía… puede tardar uno o dos minutos.</p>
+    </form>
+</main>
+
+<script th:inline="javascript">
+    (function () {
+        const MAX_BYTES = 5 * 1024 * 1024;
+        const MAX_TOTAL_BYTES = 20 * 1024 * 1024;
+        const MAX_FILES = /*[[${maxImages}]]*/ 10;
+        const TOTAL_QUESTIONS = /*[[${questions.size()}]]*/ 8;
+        const form = document.getElementById('radiografia-form');
+        const input = document.getElementById('images');
+        const previews = document.getElementById('previews');
+        const button = document.getElementById('submit-btn');
+        const loading = document.getElementById('cargando');
+
+        input.addEventListener('change', () => {
+            const files = Array.from(input.files);
+            const total = files.reduce((sum, f) => sum + f.size, 0);
+            let error = '';
+            if (files.length > MAX_FILES) {
+                error = 'Puedes subir máximo ' + MAX_FILES + ' capturas.';
+            } else if (files.some(f => !['image/png', 'image/jpeg'].includes(f.type))) {
+                error = 'Solo se aceptan imágenes PNG o JPEG.';
+            } else if (files.some(f => f.size > MAX_BYTES)) {
+                error = 'Cada imagen puede pesar máximo 5 MB.';
+            } else if (total > MAX_TOTAL_BYTES) {
+                error = 'Las capturas suman más de 20 MB.';
+            }
+            input.setCustomValidity(error);
+            input.reportValidity();
+
+            previews.innerHTML = '';
+            files.forEach((file, i) => {
+                const figure = document.createElement('figure');
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(file);
+                img.alt = 'Captura ' + (i + 1);
+                const caption = document.createElement('figcaption');
+                caption.textContent = (i + 1) + '. ' + file.name;
+                figure.append(img, caption);
+                previews.appendChild(figure);
+            });
+            previews.classList.toggle('hidden', files.length === 0);
+        });
+
+        form.addEventListener('submit', (event) => {
+            const answered = form.querySelectorAll('.pregunta input[type="radio"]:checked').length;
+            if (input.files.length === 0 && answered < TOTAL_QUESTIONS) {
+                event.preventDefault();
+                input.setCustomValidity('Sube al menos una captura o responde todas las preguntas.');
+                input.reportValidity();
+                input.addEventListener('change', () => input.setCustomValidity(''), { once: true });
+                return;
+            }
+            button.disabled = true;
+            button.textContent = 'Generando tu radiografía…';
+            loading.classList.remove('hidden');
+        });
+    })();
+</script>
+</body>
+</html>

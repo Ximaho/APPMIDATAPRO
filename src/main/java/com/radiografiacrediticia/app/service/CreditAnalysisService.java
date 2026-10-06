@@ -4,14 +4,22 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.radiografiacrediticia.app.dto.AnalysisResult;
+import com.radiografiacrediticia.app.dto.Questionnaire;
 import com.radiografiacrediticia.app.model.CreditAnalysis;
 import com.radiografiacrediticia.app.model.User;
 import com.radiografiacrediticia.app.repository.CreditAnalysisRepository;
+import com.radiografiacrediticia.app.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
+import java.time.YearMonth;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -28,26 +36,73 @@ public class CreditAnalysisService {
 
     private static final TypeReference<List<String>> STRING_LIST = new TypeReference<>() {
     };
+    private static final TypeReference<LinkedHashMap<String, String>> STRING_MAP = new TypeReference<>() {
+    };
 
     private final ClaudeAiService claudeAiService;
     private final CreditAnalysisRepository analysisRepository;
+    private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
+    private final boolean monthlyLimitEnabled;
 
     public CreditAnalysisService(ClaudeAiService claudeAiService,
                                  CreditAnalysisRepository analysisRepository,
-                                 ObjectMapper objectMapper) {
+                                 UserRepository userRepository,
+                                 ObjectMapper objectMapper,
+                                 @Value("${radiografia.limite-mensual:true}") boolean monthlyLimitEnabled) {
         this.claudeAiService = claudeAiService;
         this.analysisRepository = analysisRepository;
+        this.userRepository = userRepository;
         this.objectMapper = objectMapper;
+        this.monthlyLimitEnabled = monthlyLimitEnabled;
     }
 
     /**
-     * Ejecuta el análisis con Claude y guarda el resultado en el historial del usuario.
-     * La llamada a la API se hace fuera de la transacción para no retener conexiones de BD.
+     * Fecha desde la que el usuario puede generar su próxima radiografía, o vacío si puede hacerlo ya.
+     * El límite es una radiografía por mes calendario.
      */
-    public CreditAnalysis analyzeAndSave(User user, List<MultipartFile> images, String description) {
-        AnalysisResult result = claudeAiService.analyze(images, description);
-        List<MultipartFile> files = images.stream().filter(f -> f != null && !f.isEmpty()).toList();
+    @Transactional(readOnly = true)
+    public Optional<LocalDate> nextAvailableDate(User user) {
+        if (!monthlyLimitEnabled) {
+            return Optional.empty();
+        }
+        YearMonth thisMonth = YearMonth.now();
+        boolean usedThisMonth = analysisRepository.existsByUserAndCreatedAtGreaterThanEqual(
+                user, thisMonth.atDay(1).atStartOfDay());
+        return usedThisMonth ? Optional.of(thisMonth.plusMonths(1).atDay(1)) : Optional.empty();
+    }
+
+    /**
+     * Genera la radiografía con Claude y la guarda en el historial del usuario.
+     * La identificación queda ligada a la cuenta solo cuando la radiografía se genera con éxito,
+     * para que un error de digitación en un intento fallido no la deje fija.
+     * La llamada a la API se hace fuera de una transacción para no retener conexiones de BD.
+     */
+    public CreditAnalysis analyzeAndSave(User user, String fullName, String identification,
+                                         List<MultipartFile> images, String description,
+                                         Map<String, String> answers) {
+        nextAvailableDate(user).ifPresent(date -> {
+            throw new MonthlyLimitException(date);
+        });
+
+        String cleanName = fullName == null ? "" : fullName.trim();
+        if (cleanName.isEmpty() || cleanName.length() > 120) {
+            throw new IllegalArgumentException("Escribe tu nombre completo (máximo 120 caracteres).");
+        }
+        String cleanId = resolveIdentification(user, identification);
+
+        List<MultipartFile> files = images == null ? List.of()
+                : images.stream().filter(f -> f != null && !f.isEmpty()).toList();
+        if (files.isEmpty() && !Questionnaire.isComplete(answers)) {
+            throw new IllegalArgumentException(
+                    "Sube al menos una captura de tu reporte o, si no tienes acceso a ellas, responde todas las preguntas.");
+        }
+
+        AnalysisResult result = claudeAiService.analyze(files, description, Questionnaire.format(answers));
+
+        user.setFullName(cleanName);
+        user.setIdentification(cleanId);
+        userRepository.save(user);
 
         CreditAnalysis analysis = new CreditAnalysis();
         analysis.setUser(user);
@@ -56,12 +111,47 @@ public class CreditAnalysisService {
                 .map(f -> sanitizeFileName(f.getOriginalFilename()))
                 .collect(Collectors.joining(", ")), MAX_FILE_NAMES_COLUMN));
         analysis.setImageCount(files.size());
+        analysis.setQuestionnaireJson(answers.isEmpty() ? null : toJson(answers));
         analysis.setEstimatedScore(result.estimatedScore());
         analysis.setSummary(truncate(result.summary(), MAX_TEXT_COLUMN));
         analysis.setProblemsJson(toJson(result.problems()));
         analysis.setRecommendationsJson(toJson(result.recommendations()));
         analysis.setModelUsed(claudeAiService.getModel());
         return analysisRepository.save(analysis);
+    }
+
+    /** Usa la identificación ya ligada a la cuenta o valida la nueva (normalizada, sin puntos ni espacios). */
+    private String resolveIdentification(User user, String identification) {
+        if (user.getIdentification() != null) {
+            return user.getIdentification();
+        }
+        String clean = normalizeIdentification(identification);
+        if (!clean.matches("[A-Z0-9]{5,20}")) {
+            throw new IllegalArgumentException(
+                    "Escribe un número de identificación válido (entre 5 y 20 letras o números).");
+        }
+        if (userRepository.existsByIdentificationAndIdNot(clean, user.getId())) {
+            throw new IllegalArgumentException("Esta identificación ya está ligada a otra cuenta.");
+        }
+        return clean;
+    }
+
+    static String normalizeIdentification(String identification) {
+        return identification == null ? ""
+                : identification.replaceAll("[\\s.\\-]", "").toUpperCase(Locale.ROOT);
+    }
+
+    /** Respuestas del cuestionario guardadas con el análisis (pregunta → respuesta). */
+    public Map<String, String> answersOf(CreditAnalysis analysis) {
+        String json = analysis.getQuestionnaireJson();
+        if (json == null || json.isBlank()) {
+            return Map.of();
+        }
+        try {
+            return objectMapper.readValue(json, STRING_MAP);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Historial de análisis corrupto", e);
+        }
     }
 
     @Transactional(readOnly = true)
@@ -83,7 +173,7 @@ public class CreditAnalysisService {
                 fromJson(analysis.getRecommendationsJson()));
     }
 
-    private String toJson(List<String> items) {
+    private String toJson(Object items) {
         try {
             return objectMapper.writeValueAsString(items);
         } catch (JsonProcessingException e) {

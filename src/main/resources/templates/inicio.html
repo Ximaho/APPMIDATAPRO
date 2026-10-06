@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Inicio')}"></head>
+<body>
+<header th:replace="~{fragments :: topbar}"></header>
+
+<main class="centro">
+    <div th:replace="~{fragments :: alertas}"></div>
+
+    <span class="logo-tile"><img th:src="@{/img/logo-icon.png}" alt="Radiografía Crediticia"></span>
+    <p class="eyebrow">Acceso desbloqueado</p>
+    <h1 class="titulo">De tu información a un plan de acción.</h1>
+    <hr class="divisor">
+
+    <a th:if="${nextAvailable == null}" class="tarjeta" th:href="@{/radiografia/nueva}">
+        <div>
+            <p class="tarjeta-meta">1 vez al mes</p>
+            <h2>Radiografía de perfil</h2>
+            <p>Sube las capturas de tu historial crediticio (MiDataCrédito y/o TransUnion) o, si no tienes acceso
+                a ellas, responde unas preguntas sobre tu situación y recibe una radiografía clara de tu
+                información crediticia y un plan de acción personalizado.</p>
+        </div>
+        <svg class="flecha" viewBox="0 0 56 56" fill="none" stroke="currentColor" stroke-width="3"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M8 28h40M34 14l14 14-14 14"/>
+        </svg>
+    </a>
+
+    <div th:if="${nextAvailable != null}" class="tarjeta">
+        <div>
+            <p class="tarjeta-meta">1 vez al mes</p>
+            <h2>Ya tienes tu radiografía de este mes</h2>
+            <p>Podrás generar la siguiente a partir del
+                <strong th:text="${nextAvailableText}">1 de noviembre</strong>.
+                Mientras tanto, revisa tu plan de acción.</p>
+        </div>
+    </div>
+
+    <section class="historial" th:if="${!history.isEmpty()}">
+        <h2>Tus radiografías</h2>
+        <ul class="historial-lista">
+            <li th:each="h : ${history}">
+                <div>
+                    <span class="puntaje" th:text="${h.estimatedScore}">650</span>
+                    <span th:text="${#temporals.format(h.createdAt, 'dd/MM/yyyy')}">01/10/2026</span>
+                </div>
+                <div class="acciones">
+                    <a th:href="@{/radiografia/{id}(id=${h.id})}">Ver</a>
+                    <a th:href="@{/radiografia/{id}/pdf(id=${h.id})}">PDF</a>
+                </div>
+            </li>
+        </ul>
+    </section>
+</main>
+</body>
+</html>
