@@ -15,6 +15,19 @@ usando la **API de Claude (Anthropic)**.
     quita el comentario del bloque `@font-face` de Morphling en `static/css/styles.css`. Mientras tanto se usa
     **DM Serif Display** (licencia OFL, incluida).
 
+## Personalizar la IA
+
+Las instrucciones de la IA están en archivos de texto, sin tocar Java:
+
+- `src/main/resources/prompts/instrucciones.md`: rol, tono, cómo construir el diagnóstico y el plan de acción.
+- `src/main/resources/prompts/conocimiento.md`: base de conocimiento (normas, escala de puntaje, criterios,
+  recomendaciones habituales). **El contenido normativo debe validarlo un profesional.**
+
+Edita, guarda y reinicia la aplicación. Las notas entre `<!-- -->` son para quien edita y no se envían a la IA.
+Las reglas técnicas del formato de respuesta están fijas en `PromptLibrary.java`, así que una edición de los
+textos no puede romper la integración. El prompt se envía con caché, por lo que una base de conocimiento larga
+no encarece cada consulta en la misma proporción.
+
 ## Reglas de negocio
 
 - **Una radiografía por mes calendario** por usuario. Para pruebas se desactiva con `LIMITE_MENSUAL=false`.

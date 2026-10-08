@@ -25,6 +25,8 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 
 class ClaudeAiServiceTest {
 
+    private static final PromptLibrary PROMPTS = new PromptLibrary();
+
     private static final byte[] PNG_BYTES = {(byte) 0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A, 1, 2, 3};
     private static final byte[] JPEG_BYTES = {(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xE0, 0, 0x10};
 
@@ -35,7 +37,7 @@ class ClaudeAiServiceTest {
     void setUp() {
         RestClient.Builder builder = RestClient.builder().baseUrl("https://api.anthropic.com");
         server = MockRestServiceServer.bindTo(builder).build();
-        service = new ClaudeAiService(builder.build(), new ObjectMapper(), "test-key", "claude-sonnet-5-5", 16000);
+        service = new ClaudeAiService(builder.build(), new ObjectMapper(), "test-key", "claude-sonnet-5-5", 16000, PROMPTS);
     }
 
     @Test
@@ -65,6 +67,8 @@ class ClaudeAiServiceTest {
                 .andExpect(jsonPath("$.messages[0].content[3].source.media_type").value("image/jpeg"))
                 .andExpect(jsonPath("$.messages[0].content[4].type").value("text"))
                 .andExpect(jsonPath("$.output_config.format.type").value("json_schema"))
+                .andExpect(jsonPath("$.system[0].cache_control.type").value("ephemeral"))
+                .andExpect(jsonPath("$.system[0].text", org.hamcrest.Matchers.containsString("analista senior")))
                 .andExpect(jsonPath("$.output_config.format.schema.required.length()").value(4))
                 .andRespond(withSuccess(apiResponse, MediaType.APPLICATION_JSON));
 
@@ -129,7 +133,7 @@ class ClaudeAiServiceTest {
 
     @Test
     void failsFastWithoutApiKey() {
-        ClaudeAiService noKey = new ClaudeAiService(RestClient.create(), new ObjectMapper(), "", "m", 100);
+        ClaudeAiService noKey = new ClaudeAiService(RestClient.create(), new ObjectMapper(), "", "m", 100, PROMPTS);
         MockMultipartFile image = new MockMultipartFile("image", "r.png", "image/png", PNG_BYTES);
         assertThatThrownBy(() -> noKey.analyze(List.of(image), "descripcion", ""))
                 .isInstanceOf(ClaudeAnalysisException.class)
@@ -165,7 +169,7 @@ class ClaudeAiServiceTest {
 
     @Test
     void reportsInvalidFileAmongSeveralBeforeCheckingApiKey() {
-        ClaudeAiService noKey = new ClaudeAiService(RestClient.create(), new ObjectMapper(), "", "m", 100);
+        ClaudeAiService noKey = new ClaudeAiService(RestClient.create(), new ObjectMapper(), "", "m", 100, PROMPTS);
         MockMultipartFile good = new MockMultipartFile("images", "ok.png", "image/png", PNG_BYTES);
         MockMultipartFile fake = new MockMultipartFile("images", "falso.png", "image/png", "%PDF-1.4".getBytes());
         assertThatThrownBy(() -> noKey.analyze(List.of(good, fake), "descripcion", ""))
