@@ -18,10 +18,10 @@ class PdfReportServiceTest {
         analysis.setImageFileNames("reporte-1.png, reporte-2.png");
         analysis.setImageCount(2);
         analysis.setQuestionnaireJson("{}");
+        analysis.setScoreCalculable(true);
         analysis.setModelUsed("claude-sonnet-5-5");
 
-        AnalysisResult result = new AnalysisResult(720, "Buen comportamiento de pago.",
-                List.of("Muchas consultas recientes"), List.of("Evita solicitar crédito en los próximos 6 meses"));
+        AnalysisResult result = com.radiografiacrediticia.app.dto.TestResults.withRating(75);
 
         byte[] pdf = new PdfReportService().generateReport(analysis, result, "Ana Pérez", "1020304050",
                 java.util.Map.of("¿Has estado en mora en los últimos 12 meses?", "Sí, pero ya pagué"));

@@ -240,7 +240,28 @@ a.tarjeta:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(246, 
     display: flex; align-items: center; gap: 2rem; flex-wrap: wrap;
     background: var(--durazno); border-radius: var(--radio); padding: 1.5rem 2rem; margin: 1.5rem 0 2rem;
 }
-.panel-puntaje .valor { font-family: var(--font-titulo); font-size: 5rem; line-height: 1; color: var(--naranja); }
+.panel-puntaje .valor { font-family: var(--font-titulo); font-size: 5rem; line-height: 1; color: var(--naranja); white-space: nowrap; }
+.panel-puntaje .valor small { font-size: 1.6rem; color: var(--gris); margin-left: .2rem; }
+.panel-puntaje.tono-sin-dato .valor { color: var(--gris); }
+.panel-puntaje .confianza { margin: .3rem 0 0; }
+.factores { margin-bottom: 2rem; }
+.tabla-scroll { overflow-x: auto; }
+.tabla-factores { width: 100%; border-collapse: collapse; font-size: .95rem; min-width: 720px; }
+.tabla-factores th { text-align: left; color: var(--crema); background: var(--naranja); font-weight: 800; padding: .55rem .75rem; }
+.tabla-factores th:first-child { border-radius: 10px 0 0 10px; }
+.tabla-factores th:last-child { border-radius: 0 10px 10px 0; }
+.tabla-factores td { padding: .7rem .75rem; border-bottom: 2px solid var(--durazno); vertical-align: top; }
+.tabla-factores .num { text-align: right; white-space: nowrap; }
+.tabla-factores .puntos { color: var(--naranja); font-weight: 800; }
+.tabla-factores tfoot td { font-weight: 800; color: var(--naranja); border-bottom: 0; }
+.factor-nombre span { font-weight: 800; }
+.factor-nombre small { display: block; color: var(--gris); font-size: .8rem; }
+.mini-barra { display: block; height: 5px; background: var(--durazno); border-radius: 999px; margin-top: .3rem; overflow: hidden; }
+.mini-barra span { display: block; height: 100%; background: var(--naranja); }
+.bloque-ancho { grid-column: 1 / -1; }
+.lista-favorable li::marker { color: var(--exito); }
+.lista-verificar li::marker { color: var(--gris); }
+.aviso-puntaje { text-align: justify; max-width: 900px; margin-left: auto; margin-right: auto; }
 .panel-puntaje .detalle { flex: 1; min-width: 220px; }
 .panel-puntaje .nivel { font-weight: 800; font-size: 1.4rem; color: var(--naranja); }
 .barra { height: 10px; background: var(--crema); border-radius: 999px; overflow: hidden; margin-top: .6rem; }

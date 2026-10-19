@@ -36,6 +36,8 @@ public class CreditAnalysisService {
 
     private static final TypeReference<List<String>> STRING_LIST = new TypeReference<>() {
     };
+    private static final TypeReference<List<AnalysisResult.FactorInput>> FACTOR_LIST = new TypeReference<>() {
+    };
     private static final TypeReference<LinkedHashMap<String, String>> STRING_MAP = new TypeReference<>() {
     };
 
@@ -113,6 +115,13 @@ public class CreditAnalysisService {
         analysis.setImageCount(files.size());
         analysis.setQuestionnaireJson(answers.isEmpty() ? null : toJson(answers));
         analysis.setEstimatedScore(result.estimatedScore());
+        analysis.setScoreCalculable(result.scoreCalculable());
+        analysis.setConfidence(result.confidence());
+        analysis.setFactorsJson(toJson(result.factors().stream()
+                .map(f -> new AnalysisResult.FactorInput(f.factor().key(), f.rating(), f.verifiable(), f.justification()))
+                .toList()));
+        analysis.setFavorableJson(toJson(result.favorableAspects()));
+        analysis.setToVerifyJson(toJson(result.dataToVerify()));
         analysis.setSummary(truncate(result.summary(), MAX_TEXT_COLUMN));
         analysis.setProblemsJson(toJson(result.problems()));
         analysis.setRecommendationsJson(toJson(result.recommendations()));
@@ -166,11 +175,25 @@ public class CreditAnalysisService {
 
     /** Reconstruye el resultado estructurado a partir de la entidad persistida. */
     public AnalysisResult toResult(CreditAnalysis analysis) {
-        return new AnalysisResult(
-                analysis.getEstimatedScore(),
-                analysis.getSummary(),
-                fromJson(analysis.getProblemsJson()),
-                fromJson(analysis.getRecommendationsJson()));
+        if (analysis.getScoreCalculable() == null) {
+            return AnalysisResult.legacy(analysis.getEstimatedScore(), analysis.getSummary(),
+                    fromJson(analysis.getProblemsJson()), fromJson(analysis.getRecommendationsJson()));
+        }
+        List<AnalysisResult.FactorInput> factors = readJson(analysis.getFactorsJson(), FACTOR_LIST, List.of());
+        return AnalysisResult.fromModel(analysis.getScoreCalculable(), analysis.getConfidence(), factors,
+                analysis.getSummary(), fromJson(analysis.getFavorableJson()), fromJson(analysis.getProblemsJson()),
+                fromJson(analysis.getToVerifyJson()), fromJson(analysis.getRecommendationsJson()));
+    }
+
+    private <T> T readJson(String json, TypeReference<T> type, T empty) {
+        if (json == null || json.isBlank()) {
+            return empty;
+        }
+        try {
+            return objectMapper.readValue(json, type);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Historial de análisis corrupto", e);
+        }
     }
 
     private String toJson(Object items) {

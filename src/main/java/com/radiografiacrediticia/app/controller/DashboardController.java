@@ -124,6 +124,7 @@ public class DashboardController {
         model.addAttribute("analysis", analysis);
         model.addAttribute("result", analysisService.toResult(analysis));
         model.addAttribute("answers", analysisService.answersOf(analysis));
+        model.addAttribute("disclaimer", AnalysisResult.DISCLAIMER);
         return "radiografia";
     }
 

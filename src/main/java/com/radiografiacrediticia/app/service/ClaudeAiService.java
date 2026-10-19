@@ -3,7 +3,10 @@ package com.radiografiacrediticia.app.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.radiografiacrediticia.app.dto.AnalysisResult;
+import com.radiografiacrediticia.app.dto.ScoreFactor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,8 +40,8 @@ import java.util.Map;
  *   <li>Un bloque {@code text} final con las instrucciones y la descripción de actividad económica.</li>
  * </ol>
  * La respuesta se restringe con <em>structured outputs</em> ({@code output_config.format})
- * a un esquema JSON con las llaves {@code estimated_score}, {@code summary},
- * {@code problems} y {@code recommendations}, de modo que siempre es parseable.
+ * a un esquema JSON con la valoración de cada factor del puntaje, la confianza y los textos del
+ * informe; el puntaje total lo calcula {@link AnalysisResult#fromModel}.
  */
 @Service
 public class ClaudeAiService {
@@ -61,26 +64,67 @@ public class ClaudeAiService {
     /** Habilita el reintento automático en un modelo alterno si el modelo principal declina la solicitud. */
     private static final String FALLBACK_BETA = "server-side-fallback-2026-07-01";
 
-    /** Esquema JSON exigido a la respuesta (structured outputs). */
-    private static final Map<String, Object> RESPONSE_SCHEMA = Map.of(
-            "type", "object",
-            "properties", Map.of(
-                    "estimated_score", Map.of(
-                            "type", "integer",
-                            "description", "Puntaje crediticio estimado entre 150 y 950"),
-                    "summary", Map.of(
-                            "type", "string",
-                            "description", "Diagnóstico financiero general"),
-                    "problems", Map.of(
-                            "type", "array",
-                            "items", Map.of("type", "string"),
-                            "description", "Problemas detectados en el historial"),
-                    "recommendations", Map.of(
-                            "type", "array",
-                            "items", Map.of("type", "string"),
-                            "description", "Consejos concretos para mejorar el puntaje")),
-            "required", List.of("estimated_score", "summary", "problems", "recommendations"),
-            "additionalProperties", false);
+    /** Esquema JSON exigido a la respuesta (structured outputs). El puntaje lo calcula la aplicación. */
+    private static final Map<String, Object> RESPONSE_SCHEMA = buildSchema();
+
+    private static Map<String, Object> buildSchema() {
+        Map<String, Object> stringList = Map.of("type", "array", "items", Map.of("type", "string"));
+        Map<String, Object> factor = Map.of(
+                "type", "object",
+                "properties", Map.of(
+                        "factor", Map.of("type", "string", "enum", ScoreFactor.keys()),
+                        "rating", Map.of("type", "integer",
+                                "description", "Valoración del factor de 0 a 100 según la metodología"),
+                        "verifiable", Map.of("type", "boolean",
+                                "description", "false si los datos no permiten verificar el factor"),
+                        "justification", Map.of("type", "string",
+                                "description", "Justificación basada en los datos del titular")),
+                "required", List.of("factor", "rating", "verifiable", "justification"),
+                "additionalProperties", false);
+
+        Map<String, Object> properties = new LinkedHashMap<>();
+        properties.put("score_calculable", Map.of("type", "boolean",
+                "description", "false si la información no permite calcular un puntaje responsablemente"));
+        properties.put("confidence", Map.of("type", "string", "enum", List.of("alta", "media", "baja")));
+        properties.put("factors", Map.of("type", "array", "items", factor,
+                "description", "Los siete factores de la metodología, cada uno una sola vez"));
+        properties.put("summary", Map.of("type", "string", "description", "Diagnóstico jurídico y financiero"));
+        properties.put("favorable_aspects", stringList);
+        properties.put("problems", stringList);
+        properties.put("data_to_verify", stringList);
+        properties.put("recommendations", stringList);
+
+        return Map.of(
+                "type", "object",
+                "properties", properties,
+                "required", List.copyOf(properties.keySet()),
+                "additionalProperties", false);
+    }
+
+    /** Respuesta de la IA tal como llega en JSON. */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    record ModelResponse(
+            @JsonProperty("score_calculable") Boolean scoreCalculable,
+            @JsonProperty("confidence") String confidence,
+            @JsonProperty("factors") List<FactorJson> factors,
+            @JsonProperty("summary") String summary,
+            @JsonProperty("favorable_aspects") List<String> favorableAspects,
+            @JsonProperty("problems") List<String> problems,
+            @JsonProperty("data_to_verify") List<String> dataToVerify,
+            @JsonProperty("recommendations") List<String> recommendations) {
+
+        AnalysisResult toResult() {
+            List<AnalysisResult.FactorInput> inputs = factors == null ? List.of() : factors.stream()
+                    .map(f -> new AnalysisResult.FactorInput(f.factor(), f.rating(), f.verifiable(), f.justification()))
+                    .toList();
+            return AnalysisResult.fromModel(!Boolean.FALSE.equals(scoreCalculable), confidence, inputs, summary,
+                    favorableAspects, problems, dataToVerify, recommendations);
+        }
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    record FactorJson(String factor, Integer rating, Boolean verifiable, String justification) {
+    }
 
     private final RestClient restClient;
     private final ObjectMapper objectMapper;
@@ -277,7 +321,7 @@ public class ClaudeAiService {
         }
 
         try {
-            return objectMapper.readValue(text.toString(), AnalysisResult.class);
+            return objectMapper.readValue(text.toString(), ModelResponse.class).toResult();
         } catch (JsonProcessingException e) {
             log.warn("Respuesta de Claude no parseable: {}", text);
             throw new ClaudeAnalysisException("No fue posible interpretar la respuesta del análisis.", e);

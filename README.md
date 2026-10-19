@@ -19,14 +19,27 @@ usando la **API de Claude (Anthropic)**.
 
 Las instrucciones de la IA están en archivos de texto, sin tocar Java:
 
-- `src/main/resources/prompts/instrucciones.md`: rol, tono, cómo construir el diagnóstico y el plan de acción.
-- `src/main/resources/prompts/conocimiento.md`: base de conocimiento (normas, escala de puntaje, criterios,
-  recomendaciones habituales). **El contenido normativo debe validarlo un profesional.**
+- `src/main/resources/prompts/instrucciones.md`: rol, tono, cómo construir el diagnóstico y las acciones.
+- `src/main/resources/prompts/conocimiento/`: base de conocimiento. **Todos los `.md` de esta carpeta se
+  envían a la IA en orden alfabético**; para agregar conocimiento basta con crear un archivo nuevo
+  (por ejemplo `05-circulares.md`). Hoy contiene:
+  - `01-criterios.md`: criterios generales y situaciones especiales.
+  - `02-metodologia-puntaje.md`: metodología del puntaje interno (0–950, siete factores).
+  - `03-ley-1266-de-2008.md`: texto compilado de la Ley 1266 de 2008 con las modificaciones de la Ley 2157 de 2021.
+  - `04-jurisprudencia.md`: fichas anonimizadas de fallos de tutela de habeas data financiero.
+  **El contenido normativo debe validarlo un profesional.**
 
-Edita, guarda y reinicia la aplicación. Las notas entre `<!-- -->` son para quien edita y no se envían a la IA.
-Las reglas técnicas del formato de respuesta están fijas en `PromptLibrary.java`, así que una edición de los
-textos no puede romper la integración. El prompt se envía con caché, por lo que una base de conocimiento larga
-no encarece cada consulta en la misma proporción.
+Edite, guarde y reinicie la aplicación. Las notas entre `<!-- -->` son para quien edita y no se envían a la IA.
+Las reglas técnicas del formato de respuesta están fijas en `PromptLibrary.java`. El prompt se envía con caché.
+
+### Puntaje
+
+La IA valora de 0 a 100 cada uno de los siete factores de la metodología y justifica cada valoración;
+**la aplicación calcula los puntos, el total sobre 950 y la clasificación** (`ScoreFactor.java` y
+`AnalysisResult.java`), para que el resultado sea reproducible y siempre cuadre. Si cambia los factores o sus
+pesos en la metodología, cámbielos también en `ScoreFactor.java`. Si la información no alcanza o faltan
+factores, la radiografía se muestra sin cifra ("puntaje no calculable"). El aviso obligatorio de la metodología
+aparece siempre en la página y en el PDF.
 
 ## Reglas de negocio
 

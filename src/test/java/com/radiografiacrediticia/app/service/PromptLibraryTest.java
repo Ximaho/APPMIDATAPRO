@@ -18,6 +18,11 @@ class PromptLibraryTest {
                 .contains("analista senior de riesgo crediticio")
                 .contains("<base_de_conocimiento>")
                 .contains("Ley 1266 de 2008")
+                .contains("<documento nombre=\"02-metodologia-puntaje.md\">")
+                .contains("ARTÍCULO 13. Permanencia de la información")
+                .contains("Juzgado 803 Civil Municipal Transitorio de Medellín")
+                .contains("Comportamiento histórico de pago")
+                .contains("no mencione un puntaje total ni una categoría")
                 .contains("Reglas del formato de respuesta")
                 .contains("Dirígete siempre a la persona de \"usted\"")
                 .doesNotContain("<!--")
@@ -28,11 +33,11 @@ class PromptLibraryTest {
     void technicalRulesAreAlwaysIncludedEvenIfFilesAreEdited() {
         PromptLibrary library = new PromptLibrary(
                 new ByteArrayResource("Responde como un auditor.".getBytes(StandardCharsets.UTF_8)),
-                new ClassPathResource("prompts/no-existe.md"));
+                java.util.List.of(new ClassPathResource("prompts/no-existe.md")));
 
         assertThat(library.systemPrompt())
                 .startsWith("Responde como un auditor.")
-                .contains("estimated_score: entero entre 150 y 950")
+                .contains("entregue los siete factores")
                 .doesNotContain("<base_de_conocimiento>");
     }
 }

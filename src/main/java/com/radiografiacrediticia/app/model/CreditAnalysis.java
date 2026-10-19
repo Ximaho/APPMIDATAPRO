@@ -56,6 +56,23 @@ public class CreditAnalysis {
     @Column(name = "recommendations_json", nullable = false, length = 20000)
     private String recommendationsJson;
 
+    /** Metodología por factores: null en radiografías anteriores a ella. */
+    @Column(name = "score_calculable")
+    private Boolean scoreCalculable;
+
+    @Column(name = "confidence", length = 10)
+    private String confidence;
+
+    /** Desglose por factor (JSON: factor, rating, verifiable, justification). */
+    @Column(name = "factors_json", length = 12000)
+    private String factorsJson;
+
+    @Column(name = "favorable_json", length = 8000)
+    private String favorableJson;
+
+    @Column(name = "to_verify_json", length = 8000)
+    private String toVerifyJson;
+
     @Column(name = "model_used", length = 60)
     private String modelUsed;
 
@@ -141,6 +158,46 @@ public class CreditAnalysis {
 
     public void setRecommendationsJson(String recommendationsJson) {
         this.recommendationsJson = recommendationsJson;
+    }
+
+    public Boolean getScoreCalculable() {
+        return scoreCalculable;
+    }
+
+    public void setScoreCalculable(Boolean scoreCalculable) {
+        this.scoreCalculable = scoreCalculable;
+    }
+
+    public String getConfidence() {
+        return confidence;
+    }
+
+    public void setConfidence(String confidence) {
+        this.confidence = confidence;
+    }
+
+    public String getFactorsJson() {
+        return factorsJson;
+    }
+
+    public void setFactorsJson(String factorsJson) {
+        this.factorsJson = factorsJson;
+    }
+
+    public String getFavorableJson() {
+        return favorableJson;
+    }
+
+    public void setFavorableJson(String favorableJson) {
+        this.favorableJson = favorableJson;
+    }
+
+    public String getToVerifyJson() {
+        return toVerifyJson;
+    }
+
+    public void setToVerifyJson(String toVerifyJson) {
+        this.toVerifyJson = toVerifyJson;
     }
 
     public String getModelUsed() {

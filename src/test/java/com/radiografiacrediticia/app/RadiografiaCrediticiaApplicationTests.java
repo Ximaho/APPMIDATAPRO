@@ -69,7 +69,7 @@ class RadiografiaCrediticiaApplicationTests {
         userRepository.deleteAll();
         when(claudeAiService.getModel()).thenReturn("claude-sonnet-5-5");
         when(claudeAiService.analyze(anyList(), anyString(), anyString())).thenReturn(
-                new AnalysisResult(720, "Buen historial.", List.of("Uso alto de tarjetas"), List.of("Pagar a tiempo")));
+                com.radiografiacrediticia.app.dto.TestResults.withRating(80));
     }
 
     @Test
@@ -145,8 +145,10 @@ class RadiografiaCrediticiaApplicationTests {
 
         mvc.perform(get(location))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("Riesgo bajo")))
-                .andExpect(content().string(containsString("Su plan de acción")))
+                .andExpect(content().string(containsString("Perfil favorable")))
+                .andExpect(content().string(containsString("Desglose de factores")))
+                .andExpect(content().string(containsString("No corresponde al puntaje oficial de Datacrédito")))
+                .andExpect(content().string(containsString("Acciones recomendadas")))
                 .andExpect(content().string(containsString("Uso alto de tarjetas")));
 
         mvc.perform(get(location + "/pdf"))

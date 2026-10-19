@@ -2,6 +2,7 @@ package com.radiografiacrediticia.app.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.radiografiacrediticia.app.dto.AnalysisResult;
+import com.radiografiacrediticia.app.dto.TestResults;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
@@ -42,17 +43,7 @@ class ClaudeAiServiceTest {
 
     @Test
     void sendsMultimodalRequestAndParsesStructuredJson() {
-        String apiResponse = """
-                {
-                  "id": "msg_1",
-                  "type": "message",
-                  "role": "assistant",
-                  "stop_reason": "end_turn",
-                  "content": [
-                    {"type": "text", "text": "{\\"estimated_score\\": 612, \\"summary\\": \\"Historial aceptable\\", \\"problems\\": [\\"Mora de 30 días\\"], \\"recommendations\\": [\\"Pagar a tiempo\\", \\"Reducir uso de tarjetas\\"]}"}
-                  ]
-                }
-                """;
+        String apiResponse = TestResults.apiResponse(TestResults.modelJson(true, 80, 50, 60, 70, 40, 90, 50));
 
         server.expect(requestTo("https://api.anthropic.com/v1/messages"))
                 .andExpect(method(HttpMethod.POST))
@@ -69,7 +60,8 @@ class ClaudeAiServiceTest {
                 .andExpect(jsonPath("$.output_config.format.type").value("json_schema"))
                 .andExpect(jsonPath("$.system[0].cache_control.type").value("ephemeral"))
                 .andExpect(jsonPath("$.system[0].text", org.hamcrest.Matchers.containsString("analista senior")))
-                .andExpect(jsonPath("$.output_config.format.schema.required.length()").value(4))
+                .andExpect(jsonPath("$.output_config.format.schema.required.length()").value(8))
+                .andExpect(jsonPath("$.output_config.format.schema.properties.factors.items.properties.factor.enum.length()").value(7))
                 .andRespond(withSuccess(apiResponse, MediaType.APPLICATION_JSON));
 
         MockMultipartFile page1 = new MockMultipartFile("images", "reporte-1.png", "image/png", PNG_BYTES);
@@ -77,20 +69,13 @@ class ClaudeAiServiceTest {
         AnalysisResult result = service.analyze(List.of(page1, page2), "Trabajo independiente, ingresos estables.", "");
 
         server.verify();
-        assertThat(result.estimatedScore()).isEqualTo(612);
+        assertThat(result.estimatedScore()).isEqualTo(613);
         assertThat(result.summary()).isEqualTo("Historial aceptable");
         assertThat(result.problems()).containsExactly("Mora de 30 días");
         assertThat(result.recommendations()).hasSize(2);
-        assertThat(result.riskLevel()).isEqualTo("Riesgo medio");
-    }
-
-    @Test
-    void clampsScoreToValidRange() {
-        AnalysisResult high = new AnalysisResult(2000, "x", null, null);
-        AnalysisResult low = new AnalysisResult(10, "x", null, null);
-        assertThat(high.estimatedScore()).isEqualTo(950);
-        assertThat(low.estimatedScore()).isEqualTo(150);
-        assertThat(high.problems()).isEmpty();
+        assertThat(result.classification()).isEqualTo("Perfil con factores por mejorar");
+        assertThat(result.favorableAspects()).containsExactly("Pagos recientes al día");
+        assertThat(result.dataToVerify()).containsExactly("Cupos de las tarjetas");
     }
 
     @Test
@@ -218,9 +203,7 @@ class ClaudeAiServiceTest {
 
     @Test
     void sendsQuestionnaireOnlyRequestWithoutImages() {
-        String apiResponse = """
-                {"stop_reason": "end_turn", "content": [{"type": "text", "text": "{\\"estimated_score\\": 540, \\"summary\\": \\"Estimación sin reporte\\", \\"problems\\": [], \\"recommendations\\": [\\"Ponerse al día\\"]}"}]}
-                """;
+        String apiResponse = TestResults.apiResponse(TestResults.modelJson(true, 60, 50, 60, 50, 50, 60, 50));
         server.expect(requestTo("https://api.anthropic.com/v1/messages"))
                 .andExpect(jsonPath("$.messages[0].content.length()").value(1))
                 .andExpect(jsonPath("$.messages[0].content[0].text",
@@ -233,7 +216,7 @@ class ClaudeAiServiceTest {
                 "- ¿Has estado en mora en los últimos 12 meses? Sí, pero ya pagué");
 
         server.verify();
-        assertThat(result.estimatedScore()).isEqualTo(540);
+        assertThat(result.estimatedScore()).isEqualTo(525);
     }
 
     @Test
