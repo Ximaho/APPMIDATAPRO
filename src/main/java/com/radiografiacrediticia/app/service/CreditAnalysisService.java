@@ -87,7 +87,7 @@ public class CreditAnalysisService {
 
         String cleanName = fullName == null ? "" : fullName.trim();
         if (cleanName.isEmpty() || cleanName.length() > 120) {
-            throw new IllegalArgumentException("Escribe tu nombre completo (máximo 120 caracteres).");
+            throw new IllegalArgumentException("Escriba su nombre completo (máximo 120 caracteres).");
         }
         String cleanId = resolveIdentification(user, identification);
 
@@ -95,7 +95,7 @@ public class CreditAnalysisService {
                 : images.stream().filter(f -> f != null && !f.isEmpty()).toList();
         if (files.isEmpty() && !Questionnaire.isComplete(answers)) {
             throw new IllegalArgumentException(
-                    "Sube al menos una captura de tu reporte o, si no tienes acceso a ellas, responde todas las preguntas.");
+                    "Suba al menos una captura de su reporte o, si no tiene acceso a ellas, responda todas las preguntas.");
         }
 
         AnalysisResult result = claudeAiService.analyze(files, description, Questionnaire.format(answers));
@@ -128,7 +128,7 @@ public class CreditAnalysisService {
         String clean = normalizeIdentification(identification);
         if (!clean.matches("[A-Z0-9]{5,20}")) {
             throw new IllegalArgumentException(
-                    "Escribe un número de identificación válido (entre 5 y 20 letras o números).");
+                    "Escriba un número de identificación válido (entre 5 y 20 letras o números).");
         }
         if (userRepository.existsByIdentificationAndIdNot(clean, user.getId())) {
             throw new IllegalArgumentException("Esta identificación ya está ligada a otra cuenta.");

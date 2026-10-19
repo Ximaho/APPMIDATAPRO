@@ -1,6 +1,6 @@
 <!--
   BASE DE CONOCIMIENTO — información de referencia que la IA consulta en cada radiografía.
-  - Agrega aquí tus criterios, normas, rangos o ejemplos. Usa títulos y viñetas.
+  - Agregue aquí sus criterios, normas, rangos o ejemplos. Use títulos y viñetas.
   - IMPORTANTE: el contenido normativo de este archivo es un punto de partida y debe ser revisado y
     validado por un profesional antes de usarse con clientes. Actualízalo cuando cambie la ley.
   - Los cambios se aplican al reiniciar la aplicación. Este comentario no se envía a la IA.

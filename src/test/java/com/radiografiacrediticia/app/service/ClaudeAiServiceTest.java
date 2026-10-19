@@ -240,7 +240,7 @@ class ClaudeAiServiceTest {
     void rejectsRequestWithoutImagesNorQuestionnaire() {
         assertThatThrownBy(() -> service.analyze(List.of(), "descripcion", "  "))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("responde las preguntas");
+                .hasMessageContaining("responda las preguntas");
     }
 
     @Test

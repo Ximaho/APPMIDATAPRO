@@ -68,7 +68,7 @@ public class AuthController {
         User user = new User(form.getFullName().trim(), email, passwordEncoder.encode(form.getPassword()));
         userRepository.save(user);
 
-        redirectAttributes.addFlashAttribute("success", "Cuenta creada correctamente. Ya puedes iniciar sesión.");
+        redirectAttributes.addFlashAttribute("success", "Cuenta creada correctamente. Ya puede iniciar sesión.");
         return "redirect:/login";
     }
 

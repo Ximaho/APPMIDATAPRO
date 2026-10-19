@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments :: head('Entra a tu cuenta')}"></head>
+<head th:replace="~{fragments :: head('Ingrese a su cuenta')}"></head>
 <body>
 <main class="auth">
     <span class="logo-tile"><img th:src="@{/img/logo-icon.png}" alt="Radiografía Crediticia"></span>
-    <h1 class="titulo">Entra a tu cuenta</h1>
+    <h1 class="titulo">Ingrese a su cuenta</h1>
 
     <div th:if="${param.error}" class="alerta alerta-error" role="alert">Correo o contraseña incorrectos.</div>
     <div th:if="${param.logout}" class="alerta alerta-info" role="status">Cerraste sesión correctamente.</div>
@@ -20,7 +20,7 @@
         <button type="submit" class="btn btn-primario btn-bloque">Entrar</button>
     </form>
 
-    <p class="auth-pie">¿Aún no tienes cuenta? <a th:href="@{/register}">Regístrate</a></p>
+    <p class="auth-pie">¿Aún no tiene cuenta? <a th:href="@{/register}">Regístrese</a></p>
 </main>
 </body>
 </html>

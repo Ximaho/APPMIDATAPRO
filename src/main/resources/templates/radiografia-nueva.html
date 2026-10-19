@@ -1,44 +1,44 @@
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments :: head('Tu radiografía crediticia')}"></head>
+<head th:replace="~{fragments :: head('Su radiografía crediticia')}"></head>
 <body>
 <header th:replace="~{fragments :: topbar}"></header>
 
 <main class="contenido">
     <div class="encabezado">
         <span class="logo-tile"><img th:src="@{/img/logo-icon.png}" alt="Radiografía Crediticia"></span>
-        <h1 class="titulo">Tu radiografía crediticia</h1>
+        <h1 class="titulo">Su radiografía crediticia</h1>
     </div>
-    <p>Sube tus capturas y/o contesta las preguntas y recibe tu radiografía del mes.
-        Solo puedes generar una radiografía por mes.</p>
+    <p>Suba sus capturas y/o conteste las preguntas y reciba su radiografía del mes.
+        Solo puede generar una radiografía por mes.</p>
 
     <div class="col" th:insert="~{fragments :: alertas}"></div>
 
     <form id="radiografia-form" class="form form-radiografia" th:action="@{/radiografia}" method="post"
           enctype="multipart/form-data">
         <div class="col">
-            <label class="label-fuerte" for="fullName">Tu nombre completo</label>
+            <label class="label-fuerte" for="fullName">Su nombre completo</label>
             <input class="campo" type="text" id="fullName" name="fullName" th:value="${fullName}"
                    required maxlength="120" autocomplete="name">
 
             <label class="label-fuerte" for="identification">Identificación</label>
             <th:block th:if="${user.identification != null}">
                 <input class="campo" type="text" id="identification" th:value="${user.identification}" readonly>
-                <p class="ayuda">Tu cuenta ya quedó ligada a este usuario — no se puede cambiar.</p>
+                <p class="ayuda">Su cuenta ya quedó ligada a este usuario — no se puede cambiar.</p>
             </th:block>
             <th:block th:if="${user.identification == null}">
                 <input class="campo" type="text" id="identification" name="identification"
                        th:value="${identification}" required maxlength="25" inputmode="text"
                        placeholder="Número de documento">
-                <p class="ayuda">Al generar tu primera radiografía, este documento queda ligado a tu cuenta y no se
-                    podrá cambiar. Revísalo bien.</p>
+                <p class="ayuda">Al generar su primera radiografía, este documento queda ligado a su cuenta y no se
+                    podrá cambiar. Revíselo bien.</p>
             </th:block>
 
-            <label class="label-fuerte" for="description">¿Qué ha pasado con tu vida crediticia?</label>
+            <label class="label-fuerte" for="description">¿Qué ha pasado con su vida crediticia?</label>
             <textarea class="campo" id="description" name="description" rows="4" required
                       th:attr="maxlength=${maxDescriptionChars}" th:text="${description}"
                       placeholder="Ej: Tengo reportes negativos con entidades como… / Estuve en mora pero ya pagué…"></textarea>
-            <p class="ayuda">Con tus propias palabras — esto es lo que usamos para que tu radiografía hable de tu vida
+            <p class="ayuda">Con sus propias palabras — esto es lo que usamos para que su radiografía hable de su vida
                 crediticia y no solo de lo que aparece en las fotos.</p>
         </div>
 
@@ -49,7 +49,7 @@
                        aria-describedby="ayuda-capturas">
                 <small id="ayuda-capturas" class="ayuda sec">
                     De MiDataCrédito y/o TransUnion. Hasta <span th:text="${maxImages}">10</span> imágenes PNG o JPEG,
-                    máx. 5 MB cada una. Puedes seleccionar varias a la vez.
+                    máx. 5 MB cada una. Puede seleccionar varias a la vez.
                 </small>
                 <div id="previews" class="previews hidden"></div>
             </div>
@@ -57,8 +57,8 @@
 
         <section class="seccion">
             <span class="label label-fuerte">Preguntas</span>
-            <p class="ayuda sec col">Si no tienes acceso a tus capturas, responde todas las preguntas de opción.
-                Si subes capturas, responderlas es opcional pero hace tu radiografía más precisa.</p>
+            <p class="ayuda sec col">Si no tiene acceso a sus capturas, responda todas las preguntas de opción.
+                Si sube capturas, responderlas es opcional, pero hace su radiografía más precisa.</p>
             <div class="preguntas">
                 <th:block th:each="q, it : ${questions}">
                     <div class="pregunta" th:if="${q.open}">
@@ -89,7 +89,7 @@
 
         <p id="aviso-envio" class="alerta alerta-error col hidden" role="alert"></p>
         <button type="submit" id="submit-btn" class="btn btn-primario btn-bloque">Radiografía de mi perfil</button>
-        <p id="cargando" class="cargando hidden">Estamos preparando tu radiografía… puede tardar uno o dos minutos.</p>
+        <p id="cargando" class="cargando hidden">Estamos preparando su radiografía… puede tardar uno o dos minutos.</p>
     </form>
 </main>
 
@@ -109,7 +109,7 @@
             const total = files.reduce((sum, f) => sum + f.size, 0);
             let error = '';
             if (files.length > MAX_FILES) {
-                error = 'Puedes subir máximo ' + MAX_FILES + ' capturas.';
+                error = 'Puede subir máximo ' + MAX_FILES + ' capturas.';
             } else if (files.some(f => !['image/png', 'image/jpeg'].includes(f.type))) {
                 error = 'Solo se aceptan imágenes PNG o JPEG.';
             } else if (files.some(f => f.size > MAX_BYTES)) {
@@ -149,7 +149,7 @@
             required.forEach(f => f.classList.toggle('pendiente', missing.includes(f) && input.files.length === 0));
             if (input.files.length === 0 && missing.length > 0) {
                 event.preventDefault();
-                aviso.textContent = 'Sube al menos una captura o responde todas las preguntas de opción (faltan '
+                aviso.textContent = 'Suba al menos una captura o responda todas las preguntas de opción (faltan '
                     + missing.length + ').';
                 aviso.classList.remove('hidden');
                 missing[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -157,7 +157,7 @@
             }
             aviso.classList.add('hidden');
             button.disabled = true;
-            button.textContent = 'Generando tu radiografía…';
+            button.textContent = 'Generando su radiografía…';
             loading.classList.remove('hidden');
         });
     })();

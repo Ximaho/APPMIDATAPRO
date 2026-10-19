@@ -19,6 +19,7 @@ class PromptLibraryTest {
                 .contains("<base_de_conocimiento>")
                 .contains("Ley 1266 de 2008")
                 .contains("Reglas del formato de respuesta")
+                .contains("Dirígete siempre a la persona de \"usted\"")
                 .doesNotContain("<!--")
                 .doesNotContain("edita este archivo");
     }

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments :: head('Tu radiografía crediticia')}"></head>
+<head th:replace="~{fragments :: head('Su radiografía crediticia')}"></head>
 <body>
 <header th:replace="~{fragments :: topbar}"></header>
 
@@ -9,7 +9,7 @@
         <div class="encabezado">
             <span class="logo-tile sm"><img th:src="@{/img/logo-icon.png}" alt="Radiografía Crediticia"></span>
             <div>
-                <h1 class="titulo">Tu radiografía crediticia</h1>
+                <h1 class="titulo">Su radiografía crediticia</h1>
                 <p class="texto-sec" th:text="'Generada el ' + ${#temporals.format(analysis.createdAt, 'dd/MM/yyyy')}
                     + ' · ' + ${user.fullName}"></p>
             </div>
@@ -43,7 +43,7 @@
         </section>
 
         <section class="bloque">
-            <h2>Tu plan de acción</h2>
+            <h2>Su plan de acción</h2>
             <ol class="lista-numerada" th:if="${!result.recommendations.isEmpty()}">
                 <li th:each="r : ${result.recommendations}"><span th:text="${r}"></span></li>
             </ol>
@@ -51,7 +51,7 @@
         </section>
 
         <section class="bloque" th:if="${!answers.isEmpty()}">
-            <h2>Tus respuestas</h2>
+            <h2>Sus respuestas</h2>
             <table class="respuestas">
                 <tr th:each="a : ${answers}">
                     <td th:text="${a.key}"></td>

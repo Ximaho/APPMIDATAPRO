@@ -90,16 +90,16 @@ public class PdfReportService {
             addSectionTitle(document, "Problemas detectados");
             addBulletList(document, result.problems(), "No se detectaron problemas relevantes.");
 
-            addSectionTitle(document, "Tu plan de acción");
+            addSectionTitle(document, "Su plan de acción");
             addBulletList(document, result.recommendations(), "Sin recomendaciones adicionales.");
 
-            addSectionTitle(document, "Lo que nos contaste");
+            addSectionTitle(document, "Lo que nos contó");
             Paragraph activity = new Paragraph(analysis.getActivityDescription(), font(regular, 10f, NEGRO));
             activity.setLeading(14f);
             document.add(activity);
 
             if (answers != null && !answers.isEmpty()) {
-                addSectionTitle(document, "Tus respuestas");
+                addSectionTitle(document, "Sus respuestas");
                 PdfPTable table = new PdfPTable(new float[]{3f, 1.3f});
                 table.setWidthPercentage(100);
                 answers.forEach((question, answer) -> {
@@ -144,7 +144,7 @@ public class PdfReportService {
         meta.setBorder(Rectangle.NO_BORDER);
         meta.setPadding(16f);
         meta.setVerticalAlignment(Element.ALIGN_MIDDLE);
-        Paragraph title = new Paragraph("Tu radiografía crediticia", font(bold, 12, CREMA));
+        Paragraph title = new Paragraph("Su radiografía crediticia", font(bold, 12, CREMA));
         title.setAlignment(Element.ALIGN_RIGHT);
         meta.addElement(title);
         String date = analysis.getCreatedAt() != null ? analysis.getCreatedAt().format(DATE_FORMAT) : "";
@@ -216,7 +216,7 @@ public class PdfReportService {
         levelCell.addElement(new Paragraph(result.riskLevel(), font(bold, 17, NARANJA)));
         levelCell.addElement(new Paragraph(
                 result.problems().size() + " problema(s) detectado(s) · "
-                        + result.recommendations().size() + " paso(s) en tu plan de acción",
+                        + result.recommendations().size() + " paso(s) en su plan de acción",
                 font(regular, 10, NEGRO)));
         box.addCell(levelCell);
 

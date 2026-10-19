@@ -149,7 +149,7 @@ public class ClaudeAiService {
         List<MultipartFile> files = validateImages(images);
         String cleanQuestionnaire = questionnaire == null ? "" : questionnaire.trim();
         if (files.isEmpty() && cleanQuestionnaire.isEmpty()) {
-            throw new IllegalArgumentException("Sube al menos una captura de tu reporte o responde las preguntas.");
+            throw new IllegalArgumentException("Suba al menos una captura de su reporte o responda las preguntas.");
         }
         List<String> mediaTypes = files.stream().map(this::validateImage).toList();
         String cleanDescription = validateDescription(description);
@@ -249,7 +249,7 @@ public class ClaudeAiService {
         } catch (ResourceAccessException e) {
             log.warn("No se pudo conectar con la API de Anthropic", e);
             throw new ClaudeAnalysisException(
-                    "No fue posible conectar con el servicio de análisis. Verifica tu conexión e inténtalo de nuevo.", e);
+                    "No fue posible conectar con el servicio de análisis. Verifique su conexión e inténtelo de nuevo.", e);
         }
     }
 
@@ -258,9 +258,9 @@ public class ClaudeAiService {
         String stopReason = response.path("stop_reason").asText("");
         switch (stopReason) {
             case "refusal" -> throw new ClaudeAnalysisException(
-                    "El modelo no pudo procesar esta solicitud. Verifica que la imagen sea un reporte crediticio e inténtalo de nuevo.");
+                    "El modelo no pudo procesar esta solicitud. Verifique que la imagen sea un reporte crediticio e inténtelo de nuevo.");
             case "max_tokens" -> throw new ClaudeAnalysisException(
-                    "La respuesta del análisis quedó incompleta. Intenta con una descripción más breve.");
+                    "La respuesta del análisis quedó incompleta. Intente con una descripción más breve.");
             default -> {
                 // end_turn u otros: continuar
             }
@@ -289,11 +289,11 @@ public class ClaudeAiService {
         List<MultipartFile> files = images == null ? List.of()
                 : images.stream().filter(f -> f != null && !f.isEmpty()).toList();
         if (files.size() > MAX_IMAGES) {
-            throw new IllegalArgumentException("Puedes cargar máximo " + MAX_IMAGES + " capturas por análisis.");
+            throw new IllegalArgumentException("Puede cargar máximo " + MAX_IMAGES + " capturas por análisis.");
         }
         long totalBytes = files.stream().mapToLong(MultipartFile::getSize).sum();
         if (totalBytes > MAX_TOTAL_IMAGE_BYTES) {
-            throw new IllegalArgumentException("Las capturas suman más de 20 MB. Reduce su tamaño o cantidad.");
+            throw new IllegalArgumentException("Las capturas suman más de 20 MB. Reduzca su tamaño o cantidad.");
         }
         return files;
     }
@@ -305,7 +305,7 @@ public class ClaudeAiService {
      */
     String validateImage(MultipartFile image) {
         if (image == null || image.isEmpty()) {
-            throw new IllegalArgumentException("Debes cargar una captura de pantalla de tu reporte.");
+            throw new IllegalArgumentException("Debe cargar una captura de pantalla de su reporte.");
         }
         if (image.getSize() > MAX_IMAGE_BYTES) {
             throw new IllegalArgumentException(
@@ -325,7 +325,7 @@ public class ClaudeAiService {
         }
         if (mediaType == null) {
             throw new IllegalArgumentException(
-                    "Formato no soportado en " + image.getOriginalFilename() + ". Carga imágenes PNG o JPEG.");
+                    "Formato no soportado en " + image.getOriginalFilename() + ". Cargue imágenes PNG o JPEG.");
         }
         validateDimensions(image);
         return mediaType;
@@ -352,7 +352,7 @@ public class ClaudeAiService {
                 if (width > MAX_IMAGE_DIMENSION || height > MAX_IMAGE_DIMENSION) {
                     throw new IllegalArgumentException("La imagen " + image.getOriginalFilename() + " mide "
                             + width + "×" + height + " px; el máximo es " + MAX_IMAGE_DIMENSION
-                            + " px por lado. Divídela en varias capturas más cortas.");
+                            + " px por lado. Divídala en varias capturas más cortas.");
                 }
             } finally {
                 reader.dispose();
@@ -364,7 +364,7 @@ public class ClaudeAiService {
 
     String validateDescription(String description) {
         if (!StringUtils.hasText(description)) {
-            throw new IllegalArgumentException("Cuéntanos qué ha pasado con tu vida crediticia.");
+            throw new IllegalArgumentException("Cuéntenos qué ha pasado con su vida crediticia.");
         }
         String trimmed = description.trim();
         if (trimmed.length() > MAX_DESCRIPTION_CHARS) {
@@ -385,19 +385,19 @@ public class ClaudeAiService {
 
     private static String describeHttpError(int status, String apiMessage) {
         if (apiMessage.toLowerCase(java.util.Locale.ROOT).contains("credit balance")) {
-            return "Tu cuenta de Anthropic no tiene saldo suficiente. Compra créditos en "
-                    + "console.anthropic.com → Plans & Billing e inténtalo de nuevo.";
+            return "La cuenta de Anthropic no tiene saldo suficiente. Compre créditos en "
+                    + "console.anthropic.com → Plans & Billing e inténtelo de nuevo.";
         }
         return switch (status) {
             case 400 -> "La API de Claude rechazó la solicitud"
                     + (apiMessage.isBlank() ? "." : ": " + apiMessage);
-            case 401, 403 -> "La API key de Anthropic es inválida o no tiene permisos. Revisa ANTHROPIC_API_KEY.";
-            case 404 -> "El modelo configurado no está disponible. Revisa la propiedad anthropic.model.";
+            case 401, 403 -> "La API key de Anthropic es inválida o no tiene permisos. Revise ANTHROPIC_API_KEY.";
+            case 404 -> "El modelo configurado no está disponible. Revise la propiedad anthropic.model.";
             case 413 -> "La imagen es demasiado grande para el servicio de análisis.";
-            case 429 -> "Se alcanzó el límite de solicitudes a la API. Espera un momento e inténtalo de nuevo.";
-            case 529 -> "El servicio de análisis está saturado. Inténtalo de nuevo en unos minutos.";
+            case 429 -> "Se alcanzó el límite de solicitudes a la API. Espere un momento e inténtelo de nuevo.";
+            case 529 -> "El servicio de análisis está saturado. Inténtelo de nuevo en unos minutos.";
             default -> status >= 500
-                    ? "El servicio de análisis no está disponible temporalmente. Inténtalo más tarde."
+                    ? "El servicio de análisis no está disponible temporalmente. Inténtelo más tarde."
                     : "Error inesperado del servicio de análisis (HTTP " + status + ").";
         };
     }

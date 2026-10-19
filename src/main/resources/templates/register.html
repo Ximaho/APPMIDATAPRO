@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments :: head('Crea tu cuenta')}"></head>
+<head th:replace="~{fragments :: head('Cree su cuenta')}"></head>
 <body>
 <main class="auth">
     <span class="logo-tile"><img th:src="@{/img/logo-icon.png}" alt="Radiografía Crediticia"></span>
-    <h1 class="titulo">Crea tu cuenta</h1>
+    <h1 class="titulo">Cree su cuenta</h1>
 
     <form th:action="@{/register}" th:object="${form}" method="post" class="form" novalidate>
         <label for="fullName">Nombre completo</label>
@@ -22,7 +22,7 @@
                th:classappend="${#fields.hasErrors('password')} ? 'invalid'" autocomplete="new-password">
         <small class="field-error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></small>
 
-        <label for="confirmPassword">Confirma tu contraseña</label>
+        <label for="confirmPassword">Confirme su contraseña</label>
         <input class="campo" type="password" id="confirmPassword" th:field="*{confirmPassword}" required
                th:classappend="${#fields.hasErrors('confirmPassword')} ? 'invalid'" autocomplete="new-password">
         <small class="field-error" th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}"></small>
@@ -30,7 +30,7 @@
         <button type="submit" class="btn btn-primario btn-bloque">Crear cuenta</button>
     </form>
 
-    <p class="auth-pie">¿Ya tienes cuenta? <a th:href="@{/login}">Entra aquí</a></p>
+    <p class="auth-pie">¿Ya tiene cuenta? <a th:href="@{/login}">Ingrese aquí</a></p>
 </main>
 </body>
 </html>

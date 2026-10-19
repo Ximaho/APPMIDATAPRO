@@ -14,7 +14,7 @@ public class MonthlyLimitException extends RuntimeException {
     private final LocalDate nextAvailable;
 
     public MonthlyLimitException(LocalDate nextAvailable) {
-        super("Ya generaste tu radiografía de este mes. Podrás generar la siguiente a partir del "
+        super("Ya generó su radiografía de este mes. Podrá generar la siguiente a partir del "
                 + formatDate(nextAvailable) + ".");
         this.nextAvailable = nextAvailable;
     }

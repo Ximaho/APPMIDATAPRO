@@ -83,7 +83,7 @@ class RadiografiaCrediticiaApplicationTests {
     void loginPageShowsBrand() throws Exception {
         mvc.perform(get("/login"))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("Entra a tu cuenta")))
+                .andExpect(content().string(containsString("Ingrese a su cuenta")))
                 .andExpect(content().string(containsString("/img/logo-icon.png")));
     }
 
@@ -123,7 +123,7 @@ class RadiografiaCrediticiaApplicationTests {
         userRepository.save(new User("María Gómez", "maria@example.com", "$2a$10$hash"));
         mvc.perform(get("/inicio"))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("De tu información a un plan de acción.")))
+                .andExpect(content().string(containsString("De su información a un plan de acción.")))
                 .andExpect(content().string(containsString("/radiografia/nueva")));
     }
 
@@ -146,7 +146,7 @@ class RadiografiaCrediticiaApplicationTests {
         mvc.perform(get(location))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("Riesgo bajo")))
-                .andExpect(content().string(containsString("Tu plan de acción")))
+                .andExpect(content().string(containsString("Su plan de acción")))
                 .andExpect(content().string(containsString("Uso alto de tarjetas")));
 
         mvc.perform(get(location + "/pdf"))
@@ -164,11 +164,11 @@ class RadiografiaCrediticiaApplicationTests {
 
         mvc.perform(radiografia().file(new MockMultipartFile("images", "r1.png", "image/png", PNG)))
                 .andExpect(redirectedUrl("/inicio"))
-                .andExpect(flash().attribute("info", containsString("Ya generaste tu radiografía de este mes")));
+                .andExpect(flash().attribute("info", containsString("Ya generó su radiografía de este mes")));
 
         mvc.perform(get("/radiografia/nueva")).andExpect(redirectedUrl("/inicio"));
         mvc.perform(get("/inicio"))
-                .andExpect(content().string(containsString("Ya tienes tu radiografía de este mes")))
+                .andExpect(content().string(containsString("Ya tiene su radiografía de este mes")))
                 .andExpect(content().string(not(containsString("href=\"/radiografia/nueva\""))));
     }
 
@@ -214,7 +214,7 @@ class RadiografiaCrediticiaApplicationTests {
         mvc.perform(radiografia().param("identification", "22222222")
                         .param("q_situacion", "Aparecen obligaciones que no reconozco."))
                 .andExpect(redirectedUrl("/radiografia/nueva"))
-                .andExpect(flash().attribute("error", containsString("responde todas las preguntas")));
+                .andExpect(flash().attribute("error", containsString("responda todas las preguntas")));
         verify(claudeAiService, never()).analyze(anyList(), anyString(), anyString());
 
         // Las preguntas cerradas son obligatorias; la abierta no. Las múltiples aceptan varias opciones.

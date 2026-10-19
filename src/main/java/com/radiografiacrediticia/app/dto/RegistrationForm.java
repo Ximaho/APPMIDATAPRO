@@ -14,7 +14,7 @@ public class RegistrationForm {
     private String fullName;
 
     @NotBlank(message = "El correo es obligatorio")
-    @Email(message = "Ingresa un correo válido")
+    @Email(message = "Ingrese un correo válido")
     @Size(max = 150, message = "El correo no puede superar 150 caracteres")
     private String email;
 
@@ -22,7 +22,7 @@ public class RegistrationForm {
     @Size(min = 8, max = 72, message = "La contraseña debe tener entre 8 y 72 caracteres")
     private String password;
 
-    @NotBlank(message = "Confirma tu contraseña")
+    @NotBlank(message = "Confirme su contraseña")
     private String confirmPassword;
 
     public String getFullName() {
