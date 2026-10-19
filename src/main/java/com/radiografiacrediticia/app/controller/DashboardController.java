@@ -18,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -77,6 +78,7 @@ public class DashboardController {
         model.addAttribute("user", user);
         model.addAttribute("questions", Questionnaire.QUESTIONS);
         model.addAttribute("maxImages", ClaudeAiService.MAX_IMAGES);
+        model.addAttribute("maxOpenAnswer", Questionnaire.MAX_OPEN_ANSWER);
         model.addAttribute("maxDescriptionChars", ClaudeAiService.MAX_DESCRIPTION_CHARS);
         if (!model.containsAttribute("fullName")) {
             model.addAttribute("fullName", user.getFullName());
@@ -92,7 +94,7 @@ public class DashboardController {
                            @RequestParam(name = "fullName", required = false) String fullName,
                            @RequestParam(name = "identification", required = false) String identification,
                            @RequestParam(name = "description", required = false) String description,
-                           @RequestParam Map<String, String> params,
+                           @RequestParam MultiValueMap<String, String> params,
                            Authentication authentication,
                            RedirectAttributes redirectAttributes) {
         User user = currentUser(authentication);

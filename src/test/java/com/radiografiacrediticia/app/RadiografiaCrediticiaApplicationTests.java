@@ -211,19 +211,39 @@ class RadiografiaCrediticiaApplicationTests {
     void withoutCapturesAllQuestionsAreRequired() throws Exception {
         userRepository.save(new User("Lina", "lina@example.com", "$2a$10$hash"));
 
-        mvc.perform(radiografia().param("identification", "22222222").param("q_moras", "No"))
+        mvc.perform(radiografia().param("identification", "22222222")
+                        .param("q_situacion", "Aparecen obligaciones que no reconozco."))
                 .andExpect(redirectedUrl("/radiografia/nueva"))
                 .andExpect(flash().attribute("error", containsString("responde todas las preguntas")));
         verify(claudeAiService, never()).analyze(anyList(), anyString(), anyString());
 
+        // Las preguntas cerradas son obligatorias; la abierta no. Las múltiples aceptan varias opciones.
         MockMultipartHttpServletRequestBuilder complete = radiografia();
         complete.param("identification", "22222222");
-        Questionnaire.QUESTIONS.forEach(q -> complete.param(q.paramName(), q.options().get(0)));
+        Questionnaire.QUESTIONS.stream().filter(Questionnaire.Question::isRequired)
+                .forEach(q -> complete.param(q.paramName(), q.options().get(0)));
+        complete.param("q_revisar", "Obligaciones castigadas.", "Opción inventada");
         mvc.perform(complete).andExpect(redirectedUrlPattern("/radiografia/*"));
 
         CreditAnalysis saved = analysisRepository.findAll().get(0);
         assertThat(saved.getImageCount()).isZero();
-        assertThat(saved.getQuestionnaireJson()).contains("¿Has estado en mora");
+        assertThat(saved.getQuestionnaireJson())
+                .contains("¿Qué situaciones desea que revisemos?")
+                .contains("Reportes negativos por mora.; Obligaciones castigadas.")
+                .doesNotContain("Opción inventada")
+                .doesNotContain("Cuéntenos brevemente");
+    }
+
+    @Test
+    @WithMockUser(username = "nora@example.com")
+    void formShowsQuestionnaireFromDocument() throws Exception {
+        userRepository.save(new User("Nora", "nora@example.com", "$2a$10$hash"));
+        mvc.perform(get("/radiografia/nueva"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Cuéntenos brevemente algo importante sobre su caso.")))
+                .andExpect(content().string(containsString("Pregunta 7.")))
+                .andExpect(content().string(containsString("type=\"checkbox\" name=\"q_revisar\"")))
+                .andExpect(content().string(containsString("type=\"radio\" name=\"q_situacion\"")));
     }
 
     @Test

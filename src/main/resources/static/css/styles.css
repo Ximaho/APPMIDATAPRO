@@ -212,12 +212,20 @@ a.tarjeta:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(246, 
 
 .preguntas { max-width: 820px; background: var(--durazno); border-radius: 14px; padding: .9rem 1.25rem 1.2rem; }
 .pregunta { border: 0; margin: 1rem 0 0; padding: 0; min-width: 0; }
-.pregunta legend { padding: 0; margin-bottom: .45rem; font-size: 1rem; }
+.pregunta legend, .pregunta-titulo { display: block; padding: 0; margin-bottom: .55rem; font-size: 1rem; }
+.pregunta-titulo { color: var(--negro); }
+.pregunta-num { color: var(--naranja); font-weight: 800; margin-right: .25rem; }
+.pregunta legend .ayuda { display: block; margin-top: .1rem; }
+.preguntas .pregunta { margin-top: 1.6rem; }
+.preguntas .pregunta:first-child { margin-top: .4rem; }
+.campo-claro { background: var(--crema); }
+.pregunta.pendiente legend { color: #a3311d; }
+.pregunta.pendiente legend::after { content: " (pendiente)"; font-size: .85rem; }
 .opciones { display: flex; flex-wrap: wrap; gap: .45rem; }
 .opcion { position: relative; }
 .opcion input { position: absolute; opacity: 0; pointer-events: none; }
 .opcion span {
-    display: inline-block; padding: .4rem .9rem; border-radius: 999px; cursor: pointer;
+    display: inline-block; padding: .45rem .9rem; border-radius: 12px; cursor: pointer; line-height: 1.35;
     background: var(--crema); color: var(--negro); font-size: .95rem; border: 2px solid transparent;
 }
 .opcion input:checked + span { background: var(--naranja); color: var(--crema); }

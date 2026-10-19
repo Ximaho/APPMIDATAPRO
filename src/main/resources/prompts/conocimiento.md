@@ -26,10 +26,24 @@ El puntaje estimado usa la escala de DataCrédito, de 150 a 950. Niveles que mue
     calendario de anticipación.
   - Una vez pagada la obligación, la información negativa permanece por el doble del tiempo que duró
     la mora, sin exceder cuatro (4) años contados desde el pago.
+  - Si la obligación no se ha pagado, la información negativa caduca a los ocho (8) años contados desde
+    que la obligación entró en mora. Por eso la antigüedad de la mora más antigua es un dato clave:
+    con moras cercanas o superiores a 8 años, indica que podría proceder solicitar la eliminación del
+    dato negativo por caducidad, y que conviene verificar las fechas en el reporte.
 - **Consultas y reclamos ante la fuente o la central:** las consultas se responden en un plazo máximo
   de 10 días hábiles y los reclamos (corrección o actualización) en un plazo máximo de 15 días hábiles.
   Si el reclamo no se resuelve, la persona puede acudir a la Superintendencia de Industria y Comercio
   o a la Superintendencia Financiera, según la entidad.
+
+# Situaciones especiales
+
+- **Obligaciones que la persona no reconoce:** pueden indicar un error de la fuente o una suplantación de
+  identidad. Recomienda presentar un reclamo ante la entidad que reporta y ante la central de riesgo,
+  y, si hay indicios de suplantación, denunciarlo ante la Fiscalía y adjuntar la denuncia al reclamo.
+- **Reportes que la persona considera incorrectos o injustos:** verificar si hubo comunicación previa,
+  si los datos (saldo, fechas, estado) son exactos y si el tiempo de permanencia ya se cumplió.
+- **Obligaciones pagadas que siguen reportadas:** la entidad debe actualizar la información; con el
+  paz y salvo, la persona puede presentar un reclamo si no se actualizó.
 
 # Factores que más afectan el puntaje (criterio general)
 
