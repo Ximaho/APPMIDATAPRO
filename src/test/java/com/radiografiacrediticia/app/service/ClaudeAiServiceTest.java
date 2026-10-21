@@ -60,7 +60,7 @@ class ClaudeAiServiceTest {
                 .andExpect(jsonPath("$.output_config.format.type").value("json_schema"))
                 .andExpect(jsonPath("$.system[0].cache_control.type").value("ephemeral"))
                 .andExpect(jsonPath("$.system[0].text", org.hamcrest.Matchers.containsString("analista senior")))
-                .andExpect(jsonPath("$.output_config.format.schema.required.length()").value(7))
+                .andExpect(jsonPath("$.output_config.format.schema.required.length()").value(8))
                 .andExpect(jsonPath("$.output_config.format.schema.properties.factors.items.properties.factor.enum.length()").value(7))
                 .andRespond(withSuccess(apiResponse, MediaType.APPLICATION_JSON));
 
@@ -76,6 +76,11 @@ class ClaudeAiServiceTest {
         assertThat(result.classification()).isEqualTo("Perfil con factores por mejorar");
         assertThat(result.favorableAspects()).containsExactly("Pagos recientes al día");
         assertThat(result.dataToVerify()).containsExactly("Cupos de las tarjetas");
+        assertThat(result.petitions()).singleElement()
+                .satisfies(a -> {
+                    assertThat(a.entity()).isEqualTo("Bancolombia");
+                    assertThat(a.obligationReference()).isEqualTo("Tarjeta de crédito");
+                });
     }
 
     @Test

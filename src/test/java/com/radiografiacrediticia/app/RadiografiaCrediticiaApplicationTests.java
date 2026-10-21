@@ -291,4 +291,29 @@ class RadiografiaCrediticiaApplicationTests {
         mvc.perform(get("/inicio"))
                 .andExpect(content().string(containsString(">561<")));
     }
+
+    @Test
+    @WithMockUser(username = "pia@example.com")
+    void resultShowsEntityPlanAndPetitionCanBeDownloaded() throws Exception {
+        when(claudeAiService.analyze(anyList(), anyString(), anyString()))
+                .thenReturn(com.radiografiacrediticia.app.dto.TestResults.withPetition());
+        userRepository.save(new User("Pía", "pia@example.com", "$2a$10$hash"));
+
+        String location = mvc.perform(radiografia().file(new MockMultipartFile("images", "r1.png", "image/png", PNG))
+                        .param("identification", "44444444"))
+                .andExpect(redirectedUrlPattern("/radiografia/*"))
+                .andReturn().getResponse().getRedirectedUrl();
+
+        mvc.perform(get(location))
+                .andExpect(content().string(containsString("Pasos a seguir con cada entidad")))
+                .andExpect(content().string(containsString("Bancolombia")))
+                .andExpect(content().string(containsString(location + "/peticion/1")))
+                .andExpect(content().string(not(containsString(location + "/peticion/2"))));
+
+        mvc.perform(get(location + "/peticion/1"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Type", "application/pdf"))
+                .andExpect(header().string("Content-Disposition", containsString("derecho-de-peticion-bancolombia.pdf")));
+        mvc.perform(get(location + "/peticion/2")).andExpect(status().isNotFound());
+    }
 }

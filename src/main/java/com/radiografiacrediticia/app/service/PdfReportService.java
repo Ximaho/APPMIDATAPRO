@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.time.format.DateTimeFormatter;
+import java.time.LocalDate;
 import java.util.Map;
 
 /**
@@ -51,7 +52,10 @@ public class PdfReportService {
     private final BaseFont bold;
     private final byte[] wordmark;
 
-    public PdfReportService() {
+    private final PetitionService petitionService;
+
+    public PdfReportService(PetitionService petitionService) {
+        this.petitionService = petitionService;
         this.regular = loadFont("static/fonts/Chopin-Medium.otf");
         this.bold = loadFont("static/fonts/Chopin-ExtraBold.otf");
         this.wordmark = readResource("static/img/logo-wordmark.png");
@@ -71,7 +75,8 @@ public class PdfReportService {
         Document document = new Document(PageSize.A4, 48, 48, 40, 56);
         try {
             PdfWriter writer = PdfWriter.getInstance(document, out);
-            writer.setPageEvent(new BrandPageEvent());
+            BrandPageEvent pageEvent = new BrandPageEvent();
+            writer.setPageEvent(pageEvent);
             document.addTitle("Radiografía crediticia");
             document.addAuthor("Radiografía Crediticia");
             document.addCreator("Radiografía Crediticia");
@@ -103,6 +108,21 @@ public class PdfReportService {
             addSectionTitle(document, "Acciones recomendadas");
             addBulletList(document, result.recommendations(), "Sin recomendaciones adicionales.");
 
+            java.util.List<AnalysisResult.EntityAction> petitions = result.petitions();
+            if (!result.entityActions().isEmpty()) {
+                addSectionTitle(document, "Pasos a seguir con cada entidad");
+                addEntityActions(document, result.entityActions(), petitions);
+            }
+            if (!petitions.isEmpty()) {
+                addSectionTitle(document, "Formatos incluidos");
+                Paragraph intro = new Paragraph("Al final de este informe encontrará "
+                        + (petitions.size() == 1 ? "un derecho de petición personalizado" : petitions.size()
+                        + " derechos de petición personalizados") + ". Para usarlos:", font(regular, 10.5f, NEGRO));
+                intro.setSpacingAfter(4f);
+                document.add(intro);
+                addNumberedList(document, PETITION_INSTRUCTIONS);
+            }
+
             if (answers != null && !answers.isEmpty()) {
                 addSectionTitle(document, "Sus respuestas");
                 PdfPTable table = new PdfPTable(new float[]{3f, 1.3f});
@@ -122,6 +142,13 @@ public class PdfReportService {
                     + "inteligencia artificial y no constituyen asesoría legal ni financiera.", font(regular, 8f, GRIS));
             aiNotice.setSpacingBefore(4f);
             document.add(aiNotice);
+
+            LocalDate today = analysis.getCreatedAt() != null ? analysis.getCreatedAt().toLocalDate() : LocalDate.now();
+            for (AnalysisResult.EntityAction petition : petitions) {
+                document.newPage();
+                pageEvent.plainPages = true;
+                petitionService.write(document, userName, identification, petition, today);
+            }
         } catch (DocumentException | IOException e) {
             throw new IllegalStateException("No fue posible generar el informe PDF", e);
         } finally {
@@ -233,6 +260,65 @@ public class PdfReportService {
         document.add(box);
     }
 
+    /** Cómo usar el derecho de petición incluido como anexo. */
+    static final java.util.List<String> PETITION_INSTRUCTIONS = java.util.List.of(
+            "Imprímalo y complete a mano los espacios en blanco (ciudad, lugar de expedición de la cédula y domicilio).",
+            "Revise que el nombre, la cédula y la entidad sean correctos, y fírmelo.",
+            "Adjunte una copia de su cédula de ciudadanía.",
+            "Radíquelo por los canales oficiales de la entidad (oficina, formulario de PQRS en su página web o correo de "
+                    + "servicio al cliente) y guarde el número o la constancia de radicado.",
+            "La entidad tiene 15 días hábiles para responder un reclamo (art. 16, Ley 1266 de 2008), prorrogables por 8 "
+                    + "días hábiles más. Si no responde de fondo, puede acudir a la Superintendencia Financiera o a la "
+                    + "Superintendencia de Industria y Comercio, o presentar una acción de tutela por habeas data.");
+
+    private void addEntityActions(Document document, java.util.List<AnalysisResult.EntityAction> actions,
+                                  java.util.List<AnalysisResult.EntityAction> petitions) throws DocumentException {
+        for (AnalysisResult.EntityAction action : actions) {
+            PdfPTable box = new PdfPTable(1);
+            box.setWidthPercentage(100);
+            PdfPCell cell = new PdfPCell();
+            cell.setBackgroundColor(DURAZNO);
+            cell.setBorder(Rectangle.NO_BORDER);
+            cell.setPadding(10f);
+            cell.addElement(new Paragraph(action.entity(), font(bold, 12, NARANJA)));
+            if (!action.obligationReference().isEmpty()) {
+                cell.addElement(new Paragraph("Obligación: " + action.obligationReference(), font(regular, 9, GRIS)));
+            }
+            if (!action.issue().isEmpty()) {
+                Paragraph issue = new Paragraph(action.issue(), font(regular, 10, NEGRO));
+                issue.setSpacingAfter(4f);
+                cell.addElement(issue);
+            }
+            int n = 1;
+            for (String step : action.steps()) {
+                Paragraph p = new Paragraph(n++ + ". " + step, font(regular, 10, NEGRO));
+                p.setIndentationLeft(6f);
+                p.setLeading(13.5f);
+                cell.addElement(p);
+            }
+            if (action.petitionRecommended()) {
+                Paragraph annex = new Paragraph("Incluye derecho de petición: Anexo " + (petitions.indexOf(action) + 1),
+                        font(bold, 9.5f, NARANJA));
+                annex.setSpacingBefore(4f);
+                cell.addElement(annex);
+            }
+            box.addCell(cell);
+            box.setSpacingAfter(8f);
+            document.add(box);
+        }
+    }
+
+    private void addNumberedList(Document document, java.util.List<String> items) throws DocumentException {
+        int n = 1;
+        for (String item : items) {
+            Paragraph p = new Paragraph(n++ + ". " + item, font(regular, 10, NEGRO));
+            p.setIndentationLeft(8f);
+            p.setLeading(14f);
+            p.setSpacingAfter(2f);
+            document.add(p);
+        }
+    }
+
     private void addSectionTitle(Document document, String title) throws DocumentException {
         Paragraph p = new Paragraph(title, font(bold, 13, NARANJA));
         p.setSpacingBefore(14f);
@@ -282,8 +368,14 @@ public class PdfReportService {
 
     /** Fondo crema en cada página y pie con numeración. */
     private class BrandPageEvent extends PdfPageEventHelper {
+        /** Las páginas de los derechos de petición van en hoja blanca, sin marca. */
+        boolean plainPages;
+
         @Override
         public void onEndPage(PdfWriter writer, Document document) {
+            if (plainPages) {
+                return;
+            }
             PdfContentByte under = writer.getDirectContentUnder();
             under.saveState();
             under.setColorFill(CREMA);

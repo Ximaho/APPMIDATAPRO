@@ -80,6 +80,10 @@ public class CreditAnalysis {
     @Column(name = "to_verify_json", length = 8000)
     private String toVerifyJson;
 
+    /** Plan por entidad (JSON: entity, issue, steps, petitionRecommended, obligationReference). */
+    @Column(name = "entity_actions_json", length = 16000)
+    private String entityActionsJson;
+
     @Column(name = "model_used", length = 60)
     private String modelUsed;
 
@@ -221,6 +225,14 @@ public class CreditAnalysis {
 
     public void setToVerifyJson(String toVerifyJson) {
         this.toVerifyJson = toVerifyJson;
+    }
+
+    public String getEntityActionsJson() {
+        return entityActionsJson;
+    }
+
+    public void setEntityActionsJson(String entityActionsJson) {
+        this.entityActionsJson = entityActionsJson;
     }
 
     public String getModelUsed() {

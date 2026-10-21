@@ -71,6 +71,28 @@
             <p th:if="${result.recommendations.isEmpty()}">Sin recomendaciones adicionales.</p>
         </section>
 
+        <section class="bloque bloque-ancho" th:if="${!result.entityActions.isEmpty()}">
+            <h2>Pasos a seguir con cada entidad</h2>
+            <div class="entidades">
+                <article class="entidad" th:each="ea : ${result.entityActions}">
+                    <h3 th:text="${ea.entity}">Bancolombia</h3>
+                    <p class="texto-sec" th:if="${!#strings.isEmpty(ea.obligationReference)}"
+                       th:text="${'Obligación: ' + ea.obligationReference}"></p>
+                    <p th:text="${ea.issue}">Problema</p>
+                    <ol class="lista-numerada">
+                        <li th:each="st : ${ea.steps}"><span th:text="${st}"></span></li>
+                    </ol>
+                    <a th:if="${ea.petitionRecommended}" class="btn btn-secundario btn-peticion"
+                       th:href="@{/radiografia/{id}/peticion/{n}(id=${analysis.id}, n=${result.petitions().indexOf(ea) + 1})}">
+                        Descargar derecho de petición
+                    </a>
+                </article>
+            </div>
+            <p class="ayuda sec" th:if="${!result.petitions().isEmpty()}">Para usar el derecho de petición: imprímalo,
+                complete a mano los espacios en blanco, fírmelo, adjunte copia de su cédula y radíquelo por los canales
+                oficiales de la entidad. Guarde el número de radicado: la entidad tiene 15 días hábiles para responder.</p>
+        </section>
+
         <section class="bloque" th:if="${!answers.isEmpty()}">
             <h2>Sus respuestas</h2>
             <table class="respuestas">

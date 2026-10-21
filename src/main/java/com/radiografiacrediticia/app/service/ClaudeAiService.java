@@ -91,6 +91,20 @@ public class ClaudeAiService {
         properties.put("problems", stringList);
         properties.put("data_to_verify", stringList);
         properties.put("recommendations", stringList);
+        properties.put("entity_actions", Map.of("type", "array", "items", Map.of(
+                "type", "object",
+                "properties", Map.of(
+                        "entity", Map.of("type", "string",
+                                "description", "Nombre de la entidad (fuente o cesionaria), p. ej. Bancolombia"),
+                        "issue", Map.of("type", "string", "description", "Problema con esa entidad, en una frase"),
+                        "steps", Map.of("type", "array", "items", Map.of("type", "string"),
+                                "description", "Pasos a seguir con esa entidad, en orden"),
+                        "petition", Map.of("type", "boolean",
+                                "description", "true si se recomienda enviarle el derecho de petición"),
+                        "obligation_reference", Map.of("type", "string",
+                                "description", "Obligación concreta si se conoce; vacío si no")),
+                "required", List.of("entity", "issue", "steps", "petition", "obligation_reference"),
+                "additionalProperties", false)));
 
         return Map.of(
                 "type", "object",
@@ -108,15 +122,25 @@ public class ClaudeAiService {
             @JsonProperty("favorable_aspects") List<String> favorableAspects,
             @JsonProperty("problems") List<String> problems,
             @JsonProperty("data_to_verify") List<String> dataToVerify,
-            @JsonProperty("recommendations") List<String> recommendations) {
+            @JsonProperty("recommendations") List<String> recommendations,
+            @JsonProperty("entity_actions") List<EntityActionJson> entityActions) {
 
         AnalysisResult toResult() {
             List<AnalysisResult.FactorInput> inputs = factors == null ? List.of() : factors.stream()
                     .map(f -> new AnalysisResult.FactorInput(f.factor(), f.rating(), f.verifiable(), f.justification()))
                     .toList();
+            List<AnalysisResult.EntityAction> actions = entityActions == null ? List.of() : entityActions.stream()
+                    .map(a -> new AnalysisResult.EntityAction(a.entity(), a.issue(), a.steps(),
+                            Boolean.TRUE.equals(a.petition()), a.obligationReference()))
+                    .toList();
             return AnalysisResult.fromModel(confidence, inputs, summary,
-                    favorableAspects, problems, dataToVerify, recommendations);
+                    favorableAspects, problems, dataToVerify, recommendations).withEntityActions(actions);
         }
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    record EntityActionJson(String entity, String issue, List<String> steps, Boolean petition,
+                            @JsonProperty("obligation_reference") String obligationReference) {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

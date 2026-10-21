@@ -26,6 +26,16 @@ public final class TestResults {
                 List.of("Uso alto de tarjetas"), List.of("Cupos de las tarjetas"), List.of("Pagar a tiempo"));
     }
 
+    /** Resultado con un plan para dos entidades; solo la primera requiere derecho de petición. */
+    public static AnalysisResult withPetition() {
+        return withRating(70).withEntityActions(List.of(
+                new AnalysisResult.EntityAction("Bancolombia", "Dato negativo en permanencia por mora ya pagada.",
+                        List.of("Radique el derecho de petición incluido.", "Espere la respuesta 15 días hábiles."),
+                        true, "Tarjeta de crédito terminada en 1234"),
+                new AnalysisResult.EntityAction("Claro", "Consulta reciente sin reporte negativo.",
+                        List.of("Verifique el estado de la cuenta."), false, "")));
+    }
+
     /** JSON tal como lo devolvería la IA, con las valoraciones dadas en el orden de ScoreFactor. */
     public static String modelJson(int... ratings) {
         List<Map<String, Object>> factors = new ArrayList<>();
@@ -42,6 +52,9 @@ public final class TestResults {
         json.put("problems", List.of("Mora de 30 días"));
         json.put("data_to_verify", List.of("Cupos de las tarjetas"));
         json.put("recommendations", List.of("Pagar a tiempo", "Reducir uso de tarjetas"));
+        json.put("entity_actions", List.of(Map.of("entity", "Bancolombia", "issue", "Mora reportada",
+                "steps", List.of("Radique el derecho de petición."), "petition", true,
+                "obligation_reference", "Tarjeta de crédito")));
         return write(json);
     }
 

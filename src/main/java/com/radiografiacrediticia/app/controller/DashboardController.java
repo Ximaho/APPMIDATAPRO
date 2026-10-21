@@ -10,6 +10,7 @@ import com.radiografiacrediticia.app.service.ClaudeAnalysisException;
 import com.radiografiacrediticia.app.service.CreditAnalysisService;
 import com.radiografiacrediticia.app.service.MonthlyLimitException;
 import com.radiografiacrediticia.app.service.PdfReportService;
+import com.radiografiacrediticia.app.service.PetitionService;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -42,10 +43,13 @@ public class DashboardController {
     private final UserRepository userRepository;
     private final CreditAnalysisService analysisService;
     private final PdfReportService pdfReportService;
+    private final PetitionService petitionService;
 
     public DashboardController(UserRepository userRepository,
                                CreditAnalysisService analysisService,
-                               PdfReportService pdfReportService) {
+                               PdfReportService pdfReportService,
+                               PetitionService petitionService) {
+        this.petitionService = petitionService;
         this.userRepository = userRepository;
         this.analysisService = analysisService;
         this.pdfReportService = pdfReportService;
@@ -147,6 +151,31 @@ public class DashboardController {
                 .contentType(MediaType.APPLICATION_PDF)
                 .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment()
                         .filename("radiografia-crediticia-" + analysis.getId() + ".pdf")
+                        .build()
+                        .toString())
+                .body(pdf);
+    }
+
+    /** Derecho de petición personalizado para la entidad n.º {n} (1, 2, …) de la radiografía. */
+    @GetMapping("/radiografia/{id}/peticion/{n}")
+    public ResponseEntity<byte[]> downloadPetition(@PathVariable Long id, @PathVariable int n,
+                                                   Authentication authentication) {
+        User user = currentUser(authentication);
+        CreditAnalysis analysis = findOwned(id, user);
+        java.util.List<AnalysisResult.EntityAction> petitions = analysisService.toResult(analysis).petitions();
+        if (n < 1 || n > petitions.size()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Derecho de petición no encontrado");
+        }
+        AnalysisResult.EntityAction petition = petitions.get(n - 1);
+        LocalDate date = analysis.getCreatedAt() != null ? analysis.getCreatedAt().toLocalDate() : LocalDate.now();
+        byte[] pdf = petitionService.generate(holderName(analysis, user), holderIdentification(analysis, user),
+                petition, date);
+        String slug = petition.entity().toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]+", "-")
+                .replaceAll("(^-|-$)", "");
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment()
+                        .filename("derecho-de-peticion-" + (slug.isEmpty() ? String.valueOf(n) : slug) + ".pdf")
                         .build()
                         .toString())
                 .body(pdf);

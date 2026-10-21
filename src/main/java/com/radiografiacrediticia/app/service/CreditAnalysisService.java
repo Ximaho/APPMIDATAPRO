@@ -38,6 +38,8 @@ public class CreditAnalysisService {
     };
     private static final TypeReference<List<AnalysisResult.FactorInput>> FACTOR_LIST = new TypeReference<>() {
     };
+    private static final TypeReference<List<AnalysisResult.EntityAction>> ENTITY_ACTIONS = new TypeReference<>() {
+    };
     private static final TypeReference<LinkedHashMap<String, String>> STRING_MAP = new TypeReference<>() {
     };
 
@@ -128,6 +130,7 @@ public class CreditAnalysisService {
                 .toList()));
         analysis.setFavorableJson(toJson(result.favorableAspects()));
         analysis.setToVerifyJson(toJson(result.dataToVerify()));
+        analysis.setEntityActionsJson(toJson(result.entityActions()));
         analysis.setSummary(truncate(result.summary(), MAX_TEXT_COLUMN));
         analysis.setProblemsJson(toJson(result.problems()));
         analysis.setRecommendationsJson(toJson(result.recommendations()));
@@ -195,9 +198,10 @@ public class CreditAnalysisService {
         }
         List<AnalysisResult.FactorInput> factors = readJson(analysis.getFactorsJson(), FACTOR_LIST, List.of());
         // Se recalcula desde las valoraciones guardadas (también corrige radiografías antiguas sin cifra).
+        List<AnalysisResult.EntityAction> actions = readJson(analysis.getEntityActionsJson(), ENTITY_ACTIONS, List.of());
         return AnalysisResult.fromModel(analysis.getConfidence(), factors,
                 analysis.getSummary(), fromJson(analysis.getFavorableJson()), fromJson(analysis.getProblemsJson()),
-                fromJson(analysis.getToVerifyJson()), fromJson(analysis.getRecommendationsJson()));
+                fromJson(analysis.getToVerifyJson()), fromJson(analysis.getRecommendationsJson())).withEntityActions(actions);
     }
 
     private <T> T readJson(String json, TypeReference<T> type, T empty) {

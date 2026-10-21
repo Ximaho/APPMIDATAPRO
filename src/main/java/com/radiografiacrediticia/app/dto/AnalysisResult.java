@@ -26,7 +26,8 @@ public record AnalysisResult(
         List<String> problems,
         List<String> dataToVerify,
         List<String> recommendations,
-        boolean legacy) {
+        boolean legacy,
+        List<EntityAction> entityActions) {
 
     public static final int MIN_SCORE = 0;
     public static final int MAX_SCORE = 950;
@@ -47,6 +48,36 @@ public record AnalysisResult(
         problems = clean(problems);
         dataToVerify = clean(dataToVerify);
         recommendations = clean(recommendations);
+        entityActions = entityActions == null ? List.of()
+                : entityActions.stream().filter(a -> a != null && !a.entity().isBlank()).toList();
+    }
+
+    /**
+     * Problema con una entidad concreta (banco, cooperativa, empresa de cobranza…) y los pasos a seguir.
+     *
+     * @param petitionRecommended si se recomienda enviar a esa entidad el derecho de petición del formato
+     * @param obligationReference obligación a la que se refiere (p. ej. "tarjeta de crédito terminada en 1234"),
+     *                            o vacío si no se conoce
+     */
+    public record EntityAction(String entity, String issue, List<String> steps, boolean petitionRecommended,
+                               String obligationReference) {
+        public EntityAction {
+            entity = entity == null ? "" : entity.trim();
+            issue = issue == null ? "" : issue.trim();
+            steps = clean(steps);
+            obligationReference = obligationReference == null ? "" : obligationReference.trim();
+        }
+    }
+
+    /** Copia del resultado con el plan por entidad. */
+    public AnalysisResult withEntityActions(List<EntityAction> actions) {
+        return new AnalysisResult(estimatedScore, confidence, factors, summary, favorableAspects, problems,
+                dataToVerify, recommendations, legacy, actions);
+    }
+
+    /** Entidades a las que se recomienda enviar un derecho de petición, en orden. */
+    public List<EntityAction> petitions() {
+        return entityActions.stream().filter(EntityAction::petitionRecommended).toList();
     }
 
     /** Valoración de un factor y sus puntos (máximo del factor × valoración ÷ 100). */
@@ -105,13 +136,13 @@ public record AnalysisResult(
 
         int score = (int) Math.round(factors.stream().mapToDouble(FactorScore::points).sum());
         return new AnalysisResult(score, normalizeConfidence(confidence), factors, summary,
-                favorable, problems, toVerify, recommendations, false);
+                favorable, problems, toVerify, recommendations, false, List.of());
     }
 
     /** Radiografías generadas antes de la metodología por factores (solo puntaje y textos). */
     public static AnalysisResult legacy(int score, String summary, List<String> problems, List<String> recommendations) {
         return new AnalysisResult(score, null, List.of(), summary, List.of(), problems, List.of(),
-                recommendations, true);
+                recommendations, true, List.of());
     }
 
     /** Clasificación interna según el rango del puntaje (sección 2 de la metodología). */
