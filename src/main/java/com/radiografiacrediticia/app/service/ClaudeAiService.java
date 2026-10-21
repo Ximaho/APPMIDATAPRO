@@ -83,8 +83,6 @@ public class ClaudeAiService {
                 "additionalProperties", false);
 
         Map<String, Object> properties = new LinkedHashMap<>();
-        properties.put("score_calculable", Map.of("type", "boolean",
-                "description", "false si la información no permite calcular un puntaje responsablemente"));
         properties.put("confidence", Map.of("type", "string", "enum", List.of("alta", "media", "baja")));
         properties.put("factors", Map.of("type", "array", "items", factor,
                 "description", "Los siete factores de la metodología, cada uno una sola vez"));
@@ -104,7 +102,6 @@ public class ClaudeAiService {
     /** Respuesta de la IA tal como llega en JSON. */
     @JsonIgnoreProperties(ignoreUnknown = true)
     record ModelResponse(
-            @JsonProperty("score_calculable") Boolean scoreCalculable,
             @JsonProperty("confidence") String confidence,
             @JsonProperty("factors") List<FactorJson> factors,
             @JsonProperty("summary") String summary,
@@ -117,7 +114,7 @@ public class ClaudeAiService {
             List<AnalysisResult.FactorInput> inputs = factors == null ? List.of() : factors.stream()
                     .map(f -> new AnalysisResult.FactorInput(f.factor(), f.rating(), f.verifiable(), f.justification()))
                     .toList();
-            return AnalysisResult.fromModel(!Boolean.FALSE.equals(scoreCalculable), confidence, inputs, summary,
+            return AnalysisResult.fromModel(confidence, inputs, summary,
                     favorableAspects, problems, dataToVerify, recommendations);
         }
     }
@@ -321,7 +318,10 @@ public class ClaudeAiService {
         }
 
         try {
-            return objectMapper.readValue(text.toString(), ModelResponse.class).toResult();
+            ModelResponse model = objectMapper.readValue(text.toString(), ModelResponse.class);
+            log.info("Radiografía recibida: {} factores valorados, confianza {}.",
+                    model.factors() == null ? 0 : model.factors().size(), model.confidence());
+            return model.toResult();
         } catch (JsonProcessingException e) {
             log.warn("Respuesta de Claude no parseable: {}", text);
             throw new ClaudeAnalysisException("No fue posible interpretar la respuesta del análisis.", e);

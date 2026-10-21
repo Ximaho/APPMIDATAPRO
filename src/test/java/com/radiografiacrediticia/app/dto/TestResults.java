@@ -22,12 +22,12 @@ public final class TestResults {
         for (ScoreFactor f : ScoreFactor.values()) {
             inputs.add(new AnalysisResult.FactorInput(f.key(), rating, true, "Justificación de " + f.label()));
         }
-        return AnalysisResult.fromModel(true, "media", inputs, "Buen historial.", List.of("Pagos puntuales"),
+        return AnalysisResult.fromModel("media", inputs, "Buen historial.", List.of("Pagos puntuales"),
                 List.of("Uso alto de tarjetas"), List.of("Cupos de las tarjetas"), List.of("Pagar a tiempo"));
     }
 
     /** JSON tal como lo devolvería la IA, con las valoraciones dadas en el orden de ScoreFactor. */
-    public static String modelJson(boolean calculable, int... ratings) {
+    public static String modelJson(int... ratings) {
         List<Map<String, Object>> factors = new ArrayList<>();
         ScoreFactor[] all = ScoreFactor.values();
         for (int i = 0; i < ratings.length; i++) {
@@ -35,7 +35,6 @@ public final class TestResults {
                     "justification", "Justificación " + (i + 1)));
         }
         Map<String, Object> json = new LinkedHashMap<>();
-        json.put("score_calculable", calculable);
         json.put("confidence", "media");
         json.put("factors", factors);
         json.put("summary", "Historial aceptable");

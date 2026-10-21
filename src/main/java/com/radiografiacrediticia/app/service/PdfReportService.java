@@ -81,11 +81,6 @@ public class PdfReportService {
             addUserInfo(document, analysis, userName, identification);
             addScore(document, result);
 
-            if (!result.factors().isEmpty()) {
-                addSectionTitle(document, "Desglose de factores");
-                addFactorsTable(document, result);
-            }
-
             addSectionTitle(document, "Diagnóstico");
             Paragraph summary = new Paragraph(result.summary(), font(regular, 10.5f, NEGRO));
             summary.setLeading(15f);
@@ -108,18 +103,13 @@ public class PdfReportService {
             addSectionTitle(document, "Acciones recomendadas");
             addBulletList(document, result.recommendations(), "Sin recomendaciones adicionales.");
 
-            addSectionTitle(document, "Lo que nos contó");
-            Paragraph activity = new Paragraph(analysis.getActivityDescription(), font(regular, 10f, NEGRO));
-            activity.setLeading(14f);
-            document.add(activity);
-
             if (answers != null && !answers.isEmpty()) {
                 addSectionTitle(document, "Sus respuestas");
                 PdfPTable table = new PdfPTable(new float[]{3f, 1.3f});
                 table.setWidthPercentage(100);
                 answers.forEach((question, answer) -> {
                     table.addCell(infoCell(question, font(regular, 9.5f, NEGRO)));
-                    table.addCell(infoCell(answer, font(bold, 9.5f, NARANJA)));
+                    table.addCell(infoCell(answer.replace("; ", "\n"), font(bold, 9.5f, NARANJA)));
                 });
                 document.add(table);
             }
@@ -214,8 +204,7 @@ public class PdfReportService {
         scoreCell.setBackgroundColor(DURAZNO);
         scoreCell.setBorder(Rectangle.NO_BORDER);
         scoreCell.setPadding(14f);
-        Paragraph score = new Paragraph(result.scoreCalculable() ? String.valueOf(result.estimatedScore()) : "—",
-                font(bold, 38, NARANJA));
+        Paragraph score = new Paragraph(String.valueOf(result.estimatedScore()), font(bold, 38, NARANJA));
         score.setAlignment(Element.ALIGN_CENTER);
         scoreCell.addElement(score);
         Paragraph range = new Paragraph("sobre " + AnalysisResult.MAX_SCORE, font(regular, 9, GRIS));
@@ -230,46 +219,18 @@ public class PdfReportService {
         levelCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
         levelCell.addElement(new Paragraph(result.legacy() ? "PUNTAJE ESTIMADO (METODOLOGÍA ANTERIOR)"
                 : "PUNTAJE ESTIMADO DE RADIOGRAFÍA CREDITICIA", font(regular, 9, NARANJA)));
-        levelCell.addElement(new Paragraph(result.scoreCalculable()
-                ? "Clasificación interna: " + result.classification()
-                : "No es posible calcular el puntaje responsablemente con la información disponible.",
-                font(bold, 14, NARANJA)));
+        levelCell.addElement(new Paragraph("Clasificación interna: " + result.classification(), font(bold, 14, NARANJA)));
         if (result.confidence() != null) {
             levelCell.addElement(new Paragraph("Nivel de confianza: " + result.confidence(), font(regular, 10, NEGRO)));
+            if (result.lowConfidence()) {
+                levelCell.addElement(new Paragraph("Estimación con información limitada: revise los datos por verificar.",
+                        font(regular, 9, GRIS)));
+            }
         }
         box.addCell(levelCell);
 
         box.setSpacingAfter(6f);
         document.add(box);
-    }
-
-    private void addFactorsTable(Document document, AnalysisResult result) throws DocumentException {
-        PdfPTable table = new PdfPTable(new float[]{2.2f, 0.8f, 1.1f, 0.8f, 3.8f});
-        table.setWidthPercentage(100);
-        table.setHeaderRows(1);
-        for (String h : new String[]{"Factor", "Máximo", "Valoración", "Puntos", "Justificación"}) {
-            PdfPCell cell = new PdfPCell(new Phrase(h, font(bold, 8f, CREMA)));
-            cell.setBackgroundColor(NARANJA);
-            cell.setBorder(Rectangle.NO_BORDER);
-            cell.setPadding(5f);
-            table.addCell(cell);
-        }
-        for (AnalysisResult.FactorScore f : result.factors()) {
-            table.addCell(infoCell(f.factor().label() + (f.verifiable() ? "" : " (no verificable)"),
-                    font(bold, 8.5f, NEGRO)));
-            table.addCell(infoCell(f.maxPointsText(), font(regular, 8.5f, NEGRO)));
-            table.addCell(infoCell(f.rating() + "/100", font(regular, 8.5f, NEGRO)));
-            table.addCell(infoCell(f.pointsText(), font(bold, 8.5f, NARANJA)));
-            table.addCell(infoCell(f.justification(), font(regular, 8.5f, NEGRO)));
-        }
-        if (result.scoreCalculable()) {
-            table.addCell(infoCell("Total", font(bold, 9, NARANJA)));
-            table.addCell(infoCell(String.valueOf(AnalysisResult.MAX_SCORE), font(bold, 9, NEGRO)));
-            table.addCell(infoCell("", font(regular, 9, NEGRO)));
-            table.addCell(infoCell(String.valueOf(result.estimatedScore()), font(bold, 9, NARANJA)));
-            table.addCell(infoCell("", font(regular, 9, NEGRO)));
-        }
-        document.add(table);
     }
 
     private void addSectionTitle(Document document, String title) throws DocumentException {

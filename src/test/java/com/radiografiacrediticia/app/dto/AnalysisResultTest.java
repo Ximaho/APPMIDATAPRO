@@ -21,7 +21,7 @@ class AnalysisResultTest {
         assertThat(TestResults.withRating(0).estimatedScore()).isZero();
 
         // Puntos por factor (redondeados a un decimal): 228 + 118,8 + 85,5 + 66,5 + 30,4 + 59,9 + 23,8 = 612,9
-        AnalysisResult r = AnalysisResult.fromModel(true, "alta", List.of(
+        AnalysisResult r = AnalysisResult.fromModel("alta", List.of(
                 in("comportamiento_historico_pago", 80), in("estado_gravedad_obligaciones", 50),
                 in("endeudamiento_utilizacion_cupos", 60), in("evolucion_reciente", 70),
                 in("antiguedad_historia", 40), in("estado_cumplimiento_productos", 90),
@@ -35,7 +35,7 @@ class AnalysisResultTest {
 
     @Test
     void ratingsAreClampedAndUnknownOrRepeatedFactorsIgnored() {
-        AnalysisResult r = AnalysisResult.fromModel(true, "baja", List.of(
+        AnalysisResult r = AnalysisResult.fromModel("baja", List.of(
                 in("comportamiento_historico_pago", 150), in("comportamiento_historico_pago", 0),
                 in("factor_inventado", 100), in("estado_gravedad_obligaciones", -20),
                 in("endeudamiento_utilizacion_cupos", 100), in("evolucion_reciente", 100),
@@ -49,18 +49,23 @@ class AnalysisResultTest {
     }
 
     @Test
-    void missingFactorsOrModelRefusalMeanNoScore() {
-        AnalysisResult incomplete = AnalysisResult.fromModel(true, "media",
+    void missingFactorsGetANeutralRatingSoTheScoreIsAlwaysCalculated() {
+        AnalysisResult partial = AnalysisResult.fromModel("baja",
                 List.of(in("comportamiento_historico_pago", 90)), "x", null, null, null, null);
-        assertThat(incomplete.scoreCalculable()).isFalse();
-        assertThat(incomplete.estimatedScore()).isZero();
-        assertThat(incomplete.classification()).isEqualTo("Puntaje no calculable");
-        assertThat(incomplete.dataToVerify()).anyMatch(s -> s.contains("no evaluó todos los factores"));
 
-        AnalysisResult refused = AnalysisResult.fromModel(false, "baja", List.of(), "x", null, null,
-                List.of("Capturas legibles del reporte"), null);
-        assertThat(refused.scoreCalculable()).isFalse();
-        assertThat(refused.dataToVerify()).containsExactly("Capturas legibles del reporte");
+        assertThat(partial.factors()).hasSize(7);
+        assertThat(partial.factors().subList(1, 7))
+                .allSatisfy(f -> {
+                    assertThat(f.rating()).isEqualTo(AnalysisResult.NEUTRAL_RATING);
+                    assertThat(f.verifiable()).isFalse();
+                });
+        // 285×0,9 + (950 − 285)×0,5 = 256,5 + 332,5 = 589
+        assertThat(partial.estimatedScore()).isEqualTo(589);
+        assertThat(partial.lowConfidence()).isTrue();
+
+        AnalysisResult empty = AnalysisResult.fromModel("baja", List.of(), "x", null, null, null, null);
+        assertThat(empty.estimatedScore()).isEqualTo(475);
+        assertThat(empty.classification()).isEqualTo("Perfil con alertas importantes");
     }
 
     @Test

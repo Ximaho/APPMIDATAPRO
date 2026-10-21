@@ -146,7 +146,8 @@ class RadiografiaCrediticiaApplicationTests {
         mvc.perform(get(location))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("Perfil favorable")))
-                .andExpect(content().string(containsString("Desglose de factores")))
+                .andExpect(content().string(not(containsString("Desglose de factores"))))
+                .andExpect(content().string(containsString("/950")))
                 .andExpect(content().string(containsString("No corresponde al puntaje oficial de Datacrédito")))
                 .andExpect(content().string(containsString("Acciones recomendadas")))
                 .andExpect(content().string(containsString("Uso alto de tarjetas")));
@@ -232,8 +233,7 @@ class RadiografiaCrediticiaApplicationTests {
         assertThat(saved.getQuestionnaireJson())
                 .contains("¿Qué situaciones desea que revisemos?")
                 .contains("Reportes negativos por mora.; Obligaciones castigadas.")
-                .doesNotContain("Opción inventada")
-                .doesNotContain("Cuéntenos brevemente");
+                .doesNotContain("Opción inventada");
     }
 
     @Test
@@ -242,10 +242,12 @@ class RadiografiaCrediticiaApplicationTests {
         userRepository.save(new User("Nora", "nora@example.com", "$2a$10$hash"));
         mvc.perform(get("/radiografia/nueva"))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("Cuéntenos brevemente algo importante sobre su caso.")))
+                .andExpect(content().string(not(containsString("Cuéntenos brevemente"))))
+                .andExpect(content().string(containsString("de la forma más explícita posible")))
                 .andExpect(content().string(containsString("Pregunta 7.")))
                 .andExpect(content().string(containsString("type=\"checkbox\" name=\"q_revisar\"")))
-                .andExpect(content().string(containsString("type=\"radio\" name=\"q_situacion\"")));
+                .andExpect(content().string(containsString("type=\"checkbox\" name=\"q_situacion\"")))
+                .andExpect(content().string(containsString("type=\"radio\" name=\"q_pagos\"")));
     }
 
     @Test
@@ -262,5 +264,31 @@ class RadiografiaCrediticiaApplicationTests {
                 .param("description", "Estuve en mora pero ya pagué.")
                 .with(csrf());
         return builder;
+    }
+
+    @Test
+    @WithMockUser(username = "rosa@example.com")
+    void radiografiasSavedWithoutScoreAreRecalculatedFromStoredRatings() throws Exception {
+        User user = userRepository.save(new User("Rosa", "rosa@example.com", "$2a$10$hash"));
+        CreditAnalysis old = new CreditAnalysis();
+        old.setUser(user);
+        old.setActivityDescription("Prueba");
+        old.setImageCount(0);
+        old.setEstimatedScore(0);
+        old.setScoreCalculable(false);
+        old.setConfidence("Baja");
+        old.setSummary("Resumen");
+        old.setProblemsJson("[]");
+        old.setRecommendationsJson("[]");
+        old.setFactorsJson("[{\"factor\":\"comportamiento_historico_pago\",\"rating\":80,\"verifiable\":true,\"justification\":\"j\"}]");
+        old = analysisRepository.save(old);
+
+        // 285×0,8 + (950 − 285)×0,5 = 228 + 332,5 = 560,5 → 561
+        mvc.perform(get("/radiografia/{id}", old.getId()))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString(">561<")))
+                .andExpect(content().string(containsString("información limitada")));
+        mvc.perform(get("/inicio"))
+                .andExpect(content().string(containsString(">561<")));
     }
 }

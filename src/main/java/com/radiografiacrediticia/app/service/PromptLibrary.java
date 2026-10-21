@@ -46,11 +46,14 @@ public class PromptLibrary {
             factores, cada uno una sola vez, con su valoración de 0 a 100 ("rating"), si es verificable con los \
             datos ("verifiable") y una justificación basada en los datos del titular. No escriba el puntaje total \
             ni la clasificación: la aplicación los calcula a partir de sus valoraciones.
-            - score_calculable: false solo si la información no permite calcular un puntaje responsablemente; en \
-            ese caso explique en el resumen por qué y liste en data_to_verify qué se necesita.
+            - Entregue siempre las valoraciones de los siete factores, aunque la información sea limitada: \
+            no penalice la falta de datos (asigne una valoración neutra y marque "verifiable": false), exprese \
+            la incertidumbre con el nivel de confianza y liste en data_to_verify qué información mejoraría el \
+            análisis. La sección de "información insuficiente" de la metodología se aplica así, sin dejar de \
+            entregar las valoraciones.
             - confidence: "alta", "media" o "baja", según la sección de confianza de la metodología.
-            - summary: el diagnóstico jurídico y financiero, de 1 a 3 párrafos; diferencie hechos verificados, \
-            inferencias y datos pendientes de confirmación.
+            - summary: el diagnóstico jurídico y financiero en lenguaje sencillo, de 2 a 3 párrafos breves; \
+            diferencie hechos verificados, inferencias y datos pendientes de confirmación.
             - favorable_aspects: aspectos favorables verificables. problems: alertas principales. \
             data_to_verify: información faltante que podría cambiar el resultado. recommendations: acciones \
             recomendadas (jurídicas y financieras), priorizadas. Use listas vacías cuando no aplique.

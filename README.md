@@ -37,9 +37,10 @@ Las reglas técnicas del formato de respuesta están fijas en `PromptLibrary.jav
 La IA valora de 0 a 100 cada uno de los siete factores de la metodología y justifica cada valoración;
 **la aplicación calcula los puntos, el total sobre 950 y la clasificación** (`ScoreFactor.java` y
 `AnalysisResult.java`), para que el resultado sea reproducible y siempre cuadre. Si cambia los factores o sus
-pesos en la metodología, cámbielos también en `ScoreFactor.java`. Si la información no alcanza o faltan
-factores, la radiografía se muestra sin cifra ("puntaje no calculable"). El aviso obligatorio de la metodología
-aparece siempre en la página y en el PDF.
+pesos en la metodología, cámbielos también en `ScoreFactor.java`. El puntaje siempre se calcula: si la IA no
+valora algún factor, recibe una valoración neutra (50/100) marcada como no verificable, y la falta de información
+se refleja en el nivel de confianza. El desglose por factor se guarda, pero no se muestra en el informe. El aviso
+obligatorio de la metodología aparece siempre en la página y en el PDF.
 
 ## Reglas de negocio
 

@@ -51,12 +51,9 @@ public final class Questionnaire {
     }
 
     public static final List<Question> QUESTIONS = List.of(
-            new Question("caso",
-                    "Cuéntenos brevemente algo importante sobre su caso.",
-                    Type.OPEN, List.of()),
             new Question("situacion",
                     "¿Cuál de estas situaciones describe mejor su vida crediticia actual?",
-                    Type.SINGLE, List.of(
+                    Type.MULTIPLE, List.of(
                     "Tengo obligaciones en mora y reportes negativos.",
                     "Tengo obligaciones en mora, pero no sé si estoy reportado.",
                     "Pagué una o varias deudas, pero no sé cómo aparecen en mi historial.",
@@ -66,7 +63,7 @@ public final class Questionnaire {
                     "No sé cómo está mi historial crediticio.")),
             new Question("estado_obligaciones",
                     "¿Cuál es el estado de sus obligaciones actualmente?",
-                    Type.SINGLE, List.of(
+                    Type.MULTIPLE, List.of(
                     "Tengo obligaciones al día.",
                     "Tengo una o varias obligaciones en mora.",
                     "Pagué todas mis obligaciones.",
@@ -117,7 +114,7 @@ public final class Questionnaire {
                     "No sé cómo consultar mi historial crediticio.")),
             new Question("objetivo",
                     "¿Qué desea conseguir principalmente con Radiografía Crediticia?",
-                    Type.SINGLE, List.of(
+                    Type.MULTIPLE, List.of(
                     "Saber qué reportes negativos tengo.",
                     "Identificar si existen fundamentos para solicitar la eliminación de reportes.",
                     "Verificar la actualización de una deuda que ya pagué.",

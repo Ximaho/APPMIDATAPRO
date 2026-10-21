@@ -115,7 +115,8 @@ public class CreditAnalysisService {
         analysis.setImageCount(files.size());
         analysis.setQuestionnaireJson(answers.isEmpty() ? null : toJson(answers));
         analysis.setEstimatedScore(result.estimatedScore());
-        analysis.setScoreCalculable(result.scoreCalculable());
+        // Marca de la metodología por factores (las radiografías anteriores tienen null).
+        analysis.setScoreCalculable(true);
         analysis.setConfidence(result.confidence());
         analysis.setFactorsJson(toJson(result.factors().stream()
                 .map(f -> new AnalysisResult.FactorInput(f.factor().key(), f.rating(), f.verifiable(), f.justification()))
@@ -180,7 +181,8 @@ public class CreditAnalysisService {
                     fromJson(analysis.getProblemsJson()), fromJson(analysis.getRecommendationsJson()));
         }
         List<AnalysisResult.FactorInput> factors = readJson(analysis.getFactorsJson(), FACTOR_LIST, List.of());
-        return AnalysisResult.fromModel(analysis.getScoreCalculable(), analysis.getConfidence(), factors,
+        // Se recalcula desde las valoraciones guardadas (también corrige radiografías antiguas sin cifra).
+        return AnalysisResult.fromModel(analysis.getConfidence(), factors,
                 analysis.getSummary(), fromJson(analysis.getFavorableJson()), fromJson(analysis.getProblemsJson()),
                 fromJson(analysis.getToVerifyJson()), fromJson(analysis.getRecommendationsJson()));
     }

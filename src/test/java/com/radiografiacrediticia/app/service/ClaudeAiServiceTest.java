@@ -43,7 +43,7 @@ class ClaudeAiServiceTest {
 
     @Test
     void sendsMultimodalRequestAndParsesStructuredJson() {
-        String apiResponse = TestResults.apiResponse(TestResults.modelJson(true, 80, 50, 60, 70, 40, 90, 50));
+        String apiResponse = TestResults.apiResponse(TestResults.modelJson(80, 50, 60, 70, 40, 90, 50));
 
         server.expect(requestTo("https://api.anthropic.com/v1/messages"))
                 .andExpect(method(HttpMethod.POST))
@@ -60,7 +60,7 @@ class ClaudeAiServiceTest {
                 .andExpect(jsonPath("$.output_config.format.type").value("json_schema"))
                 .andExpect(jsonPath("$.system[0].cache_control.type").value("ephemeral"))
                 .andExpect(jsonPath("$.system[0].text", org.hamcrest.Matchers.containsString("analista senior")))
-                .andExpect(jsonPath("$.output_config.format.schema.required.length()").value(8))
+                .andExpect(jsonPath("$.output_config.format.schema.required.length()").value(7))
                 .andExpect(jsonPath("$.output_config.format.schema.properties.factors.items.properties.factor.enum.length()").value(7))
                 .andRespond(withSuccess(apiResponse, MediaType.APPLICATION_JSON));
 
@@ -203,7 +203,7 @@ class ClaudeAiServiceTest {
 
     @Test
     void sendsQuestionnaireOnlyRequestWithoutImages() {
-        String apiResponse = TestResults.apiResponse(TestResults.modelJson(true, 60, 50, 60, 50, 50, 60, 50));
+        String apiResponse = TestResults.apiResponse(TestResults.modelJson(60, 50, 60, 50, 50, 60, 50));
         server.expect(requestTo("https://api.anthropic.com/v1/messages"))
                 .andExpect(jsonPath("$.messages[0].content.length()").value(1))
                 .andExpect(jsonPath("$.messages[0].content[0].text",

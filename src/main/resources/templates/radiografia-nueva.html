@@ -38,8 +38,10 @@
             <textarea class="campo" id="description" name="description" rows="4" required
                       th:attr="maxlength=${maxDescriptionChars}" th:text="${description}"
                       placeholder="Ej: Tengo reportes negativos con entidades como… / Estuve en mora pero ya pagué…"></textarea>
-            <p class="ayuda">Con sus propias palabras — esto es lo que usamos para que su radiografía hable de su vida
-                crediticia y no solo de lo que aparece en las fotos.</p>
+            <p class="ayuda">Con sus propias palabras y de la forma más explícita posible: entidades, montos, fechas de las moras,
+                pagos realizados y cualquier reporte que considere incorrecto. Entre más detalle nos dé, más preciso será
+                el análisis — esto es lo que usamos para que su radiografía hable de su vida crediticia y no solo de lo
+                que aparece en las fotos.</p>
         </div>
 
         <section class="seccion">
@@ -70,7 +72,7 @@
                     </div>
                     <fieldset class="pregunta" th:unless="${q.open}" th:attr="data-requerida=${q.required}">
                         <legend>
-                            <span class="pregunta-num" th:text="${'Pregunta ' + (it.index) + '.'}">Pregunta 1.</span>
+                            <span class="pregunta-num" th:text="${'Pregunta ' + it.count + '.'}">Pregunta 1.</span>
                             <span th:text="${q.text}">Pregunta</span>
                             <small class="ayuda sec" th:if="${q.multiple}">Puede elegir varias opciones.</small>
                         </legend>

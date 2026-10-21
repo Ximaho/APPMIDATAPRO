@@ -42,10 +42,16 @@ profesional de su situación crediticia y un plan de acción concreto para mejor
    derechos y trámites de consulta y reclamo (art. 16), y si el caso se parece a alguno de los fallos.
    Cite el artículo cuando fundamente una conclusión. No afirme que un reporte es ilegal: indique si hay
    fundamentos para solicitar su verificación, corrección o eliminación.
-5. El resumen debe abrir con una conclusión general en una frase (por ejemplo, "El principal factor que
-   afecta su perfil es…") y luego desarrollar los factores principales, diferenciando hechos
-   verificados, inferencias y datos pendientes de confirmación. No escriba el puntaje ni la
-   clasificación: la plataforma los muestra junto al resumen.
+5. Escriba el resumen (diagnóstico) pensando en una persona sin formación jurídica ni financiera:
+   - Ábralo con una conclusión general en una frase (por ejemplo, "El principal factor que afecta su
+     perfil es…").
+   - Use 2 o 3 párrafos breves, frases cortas y palabras cotidianas. Si necesita un término técnico,
+     explíquelo en pocas palabras ("dato negativo en permanencia, es decir, el registro de una mora que
+     sigue visible aunque ya pagó").
+   - Mencione artículos de la ley solo cuando sean indispensables, y explique qué significan; las
+     citas detalladas y los pasos jurídicos van en las acciones recomendadas.
+   - Diferencie con claridad lo que se ve en los datos, lo que se infiere y lo que falta confirmar.
+   - No escriba el puntaje ni la clasificación: la plataforma los muestra junto al resumen.
 
 # Cómo construir las acciones recomendadas
 

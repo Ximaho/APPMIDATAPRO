@@ -60,7 +60,12 @@ public class DashboardController {
     public String home(Authentication authentication, Model model) {
         User user = currentUser(authentication);
         model.addAttribute("user", user);
-        model.addAttribute("history", analysisService.history(user));
+        List<CreditAnalysis> history = analysisService.history(user);
+        model.addAttribute("history", history);
+        // Puntaje recalculado desde las valoraciones guardadas (corrige radiografías antiguas sin cifra).
+        Map<Long, Integer> scores = new java.util.HashMap<>();
+        history.forEach(h -> scores.put(h.getId(), analysisService.toResult(h).estimatedScore()));
+        model.addAttribute("scores", scores);
         LocalDate next = analysisService.nextAvailableDate(user).orElse(null);
         model.addAttribute("nextAvailable", next);
         model.addAttribute("nextAvailableText", next == null ? null : MonthlyLimitException.formatDate(next));

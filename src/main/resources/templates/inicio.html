@@ -41,7 +41,7 @@
         <ul class="historial-lista">
             <li th:each="h : ${history}">
                 <div>
-                    <span class="puntaje" th:text="${h.scoreCalculable == false ? '—' : h.estimatedScore}">650</span>
+                    <span class="puntaje" th:text="${scores[h.id]}">650</span>
                     <span th:text="${#temporals.format(h.createdAt, 'dd/MM/yyyy')}">01/10/2026</span>
                 </div>
                 <div class="acciones">

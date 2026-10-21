@@ -19,57 +19,17 @@
 
     <section class="panel-puntaje" th:classappend="${'tono-' + result.tone()}">
         <div class="valor">
-            <span th:text="${result.scoreCalculable ? result.estimatedScore : '—'}">650</span><small>/950</small>
+            <span th:text="${result.estimatedScore}">650</span><small>/950</small>
         </div>
         <div class="detalle">
             <p class="eyebrow" th:text="${result.legacy ? 'Puntaje estimado (metodología anterior)' : 'Puntaje estimado de Radiografía Crediticia'}">Puntaje estimado</p>
-            <div class="nivel" th:if="${result.scoreCalculable}" th:text="${'Clasificación interna: ' + result.classification()}">Perfil favorable</div>
-            <div class="nivel" th:unless="${result.scoreCalculable}">No es posible calcular el puntaje responsablemente con la información disponible.</div>
+            <div class="nivel" th:text="${'Clasificación interna: ' + result.classification()}">Perfil favorable</div>
             <p class="confianza" th:if="${result.confidence != null}">Nivel de confianza: <strong th:text="${result.confidence}">Media</strong></p>
-            <div class="barra" th:if="${result.scoreCalculable}">
+            <p class="confianza texto-sec" th:if="${result.lowConfidence()}">Estimación con información limitada: revise los
+                datos por verificar.</p>
+            <div class="barra">
                 <span th:style="'width:' + ${result.scorePercent()} + '%'"></span>
             </div>
-        </div>
-    </section>
-
-    <section class="bloque factores" th:if="${!result.factors.isEmpty()}">
-        <h2>Desglose de factores</h2>
-        <div class="tabla-scroll">
-            <table class="tabla-factores">
-                <thead>
-                <tr>
-                    <th>Factor</th>
-                    <th class="num">Máximo</th>
-                    <th class="num">Valoración</th>
-                    <th class="num">Puntos</th>
-                    <th>Justificación</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:each="f : ${result.factors}">
-                    <td class="factor-nombre">
-                        <span th:text="${f.factor.label()}">Factor</span>
-                        <small th:unless="${f.verifiable}">No verificable</small>
-                    </td>
-                    <td class="num" th:text="${f.maxPointsText()}">285</td>
-                    <td class="num">
-                        <span th:text="${f.rating}">80</span>/100
-                        <span class="mini-barra"><span th:style="'width:' + ${f.rating} + '%'"></span></span>
-                    </td>
-                    <td class="num puntos" th:text="${f.pointsText()}">228</td>
-                    <td th:text="${f.justification}">Justificación</td>
-                </tr>
-                </tbody>
-                <tfoot th:if="${result.scoreCalculable}">
-                <tr>
-                    <td>Total</td>
-                    <td class="num">950</td>
-                    <td></td>
-                    <td class="num puntos" th:text="${result.estimatedScore}">650</td>
-                    <td></td>
-                </tr>
-                </tfoot>
-            </table>
         </div>
     </section>
 
@@ -116,7 +76,8 @@
             <table class="respuestas">
                 <tr th:each="a : ${answers}">
                     <td th:text="${a.key}"></td>
-                    <td th:text="${a.value}"></td>
+                    <td><span class="respuesta" th:each="v : ${#strings.arraySplit(a.value, ';')}"
+                              th:text="${#strings.trim(v)}"></span></td>
                 </tr>
             </table>
         </section>
