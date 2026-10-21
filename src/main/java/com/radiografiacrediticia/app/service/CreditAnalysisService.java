@@ -83,7 +83,7 @@ public class CreditAnalysisService {
      * La llamada a la API se hace fuera de una transacción para no retener conexiones de BD.
      */
     public CreditAnalysis analyzeAndSave(User user, String fullName, String identification, String phone,
-                                         String email, List<MultipartFile> images, String description,
+                                         List<MultipartFile> images, String description,
                                          Map<String, String> answers) {
         nextAvailableDate(user).ifPresent(date -> {
             throw new MonthlyLimitException(date);
@@ -98,14 +98,6 @@ public class CreditAnalysisService {
         if (cleanPhone.length() < 7 || cleanPhone.length() > 15) {
             throw new IllegalArgumentException("Escriba un número de celular válido (solo números, p. ej. 3001234567).");
         }
-        String cleanEmail = user.getEmail();
-        if (user.isAdmin()) {
-            cleanEmail = email == null ? "" : email.trim().toLowerCase(Locale.ROOT);
-            if (!cleanEmail.matches("[^@\\s]+@[^@\\s]+\\.[^@\\s]+") || cleanEmail.length() > 150) {
-                throw new IllegalArgumentException("Escriba el correo electrónico de la persona analizada.");
-            }
-        }
-
         List<MultipartFile> files = images == null ? List.of()
                 : images.stream().filter(f -> f != null && !f.isEmpty()).toList();
         if (files.isEmpty() && !Questionnaire.isComplete(answers)) {
@@ -128,7 +120,8 @@ public class CreditAnalysisService {
         analysis.setHolderName(cleanName);
         analysis.setHolderIdentification(cleanId);
         analysis.setHolderPhone(cleanPhone);
-        analysis.setHolderEmail(cleanEmail);
+        // El derecho de petición usa siempre el correo con el que está registrada la cuenta.
+        analysis.setHolderEmail(user.getEmail());
         analysis.setActivityDescription(description.trim());
         analysis.setImageFileNames(truncate(files.stream()
                 .map(f -> sanitizeFileName(f.getOriginalFilename()))

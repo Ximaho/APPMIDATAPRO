@@ -88,7 +88,6 @@ class AdminAccountTests {
                             .param("fullName", prueba[0])
                             .param("identification", prueba[1])
                             .param("phone", "3105556677")
-                            .param("email", "cliente" + prueba[1] + "@correo.test")
                             .param("description", "Prueba de administrador")
                             .with(csrf()))
                     .andExpect(redirectedUrlPattern("/radiografia/*"))
@@ -98,8 +97,7 @@ class AdminAccountTests {
 
         assertThat(analysisRepository.count()).isEqualTo(3);
         assertThat(analysisRepository.findAll()).extracting("holderEmail")
-                .containsExactlyInAnyOrder("cliente11111111@correo.test", "cliente22222222@correo.test",
-                        "cliente77777777@correo.test");
+                .containsOnly("admin@radiografia.test");
         User admin = userRepository.findByEmailIgnoreCase("admin@radiografia.test").orElseThrow();
         assertThat(admin.getIdentification()).isNull();
         assertThat(admin.getFullName()).isEqualTo("Administrador");

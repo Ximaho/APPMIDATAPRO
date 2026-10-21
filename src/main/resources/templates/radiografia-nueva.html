@@ -47,13 +47,6 @@
             <p class="ayuda">Lo usamos, junto con el correo de su cuenta, para que las entidades le respondan el
                 derecho de petición. No aparece en su radiografía.</p>
 
-            <th:block th:if="${user.admin}">
-                <label class="label-fuerte" for="email">Correo electrónico de la persona</label>
-                <input class="campo" type="email" id="email" name="email" th:value="${email}" required maxlength="150"
-                       placeholder="correo@ejemplo.com">
-                <p class="ayuda">Cuenta de administrador: a este correo llegarán las respuestas del derecho de petición.</p>
-            </th:block>
-
             <label class="label-fuerte" for="description">¿Qué ha pasado con su vida crediticia?</label>
             <textarea class="campo" id="description" name="description" rows="4" required
                       th:attr="maxlength=${maxDescriptionChars}" th:text="${description}"

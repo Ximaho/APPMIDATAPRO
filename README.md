@@ -65,9 +65,9 @@ $env:ADMIN_PASSWORD = "una-clave-segura"      # mínimo 8 caracteres
   formato "05. DERECHO DE PETICIÓN (no abogado)" (`PetitionService.java`). El texto jurídico es fijo; solo se llenan
   la fecha, la entidad, el titular, la cédula y la obligación. Ciudad, lugar de expedición y firma quedan en blanco
   para completar a mano. Va como anexo al final del PDF y también se descarga por separado desde la página.
-- Las notificaciones de la petición llegan a la propia persona: el correo de su cuenta y el celular que escribe
-  en el formulario (campo obligatorio, después de "Identificación"). En la cuenta de administrador se pide
-  también el correo de la persona analizada. El celular y el correo no aparecen en el informe de la radiografía.
+- Las notificaciones de la petición llegan a la propia persona: el correo con el que está registrada su cuenta
+  y el celular que escribe en el formulario (campo obligatorio, después de "Identificación"). El celular y el
+  correo no aparecen en el informe de la radiografía.
 - Cuándo se recomienda: `prompts/conocimiento/05-acciones-y-derecho-de-peticion.md`.
 
 ## Reglas de negocio

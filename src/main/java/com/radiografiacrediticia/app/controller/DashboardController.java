@@ -106,7 +106,6 @@ public class DashboardController {
                            @RequestParam(name = "fullName", required = false) String fullName,
                            @RequestParam(name = "identification", required = false) String identification,
                            @RequestParam(name = "phone", required = false) String phone,
-                           @RequestParam(name = "email", required = false) String email,
                            @RequestParam(name = "description", required = false) String description,
                            @RequestParam MultiValueMap<String, String> params,
                            Authentication authentication,
@@ -114,7 +113,7 @@ public class DashboardController {
         User user = currentUser(authentication);
         Map<String, String> answers = Questionnaire.extractAnswers(params);
         try {
-            CreditAnalysis analysis = analysisService.analyzeAndSave(user, fullName, identification, phone, email,
+            CreditAnalysis analysis = analysisService.analyzeAndSave(user, fullName, identification, phone,
                     images == null ? List.of() : images, description, answers);
             return "redirect:/radiografia/" + analysis.getId();
         } catch (MonthlyLimitException e) {
@@ -125,7 +124,6 @@ public class DashboardController {
             redirectAttributes.addFlashAttribute("fullName", fullName);
             redirectAttributes.addFlashAttribute("identification", identification);
             redirectAttributes.addFlashAttribute("phone", phone);
-            redirectAttributes.addFlashAttribute("email", email);
             redirectAttributes.addFlashAttribute("description", description);
             redirectAttributes.addFlashAttribute("selected", Questionnaire.selectedById(params));
             return "redirect:/radiografia/nueva";
