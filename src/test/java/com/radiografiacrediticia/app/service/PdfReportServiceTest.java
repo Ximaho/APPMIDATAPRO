@@ -23,8 +23,9 @@ class PdfReportServiceTest {
 
         AnalysisResult result = com.radiografiacrediticia.app.dto.TestResults.withRating(75);
 
-        byte[] pdf = new PdfReportService(new PetitionService("", "")).generateReport(analysis, result, "Ana Pérez", "1020304050",
-                java.util.Map.of("¿Has estado en mora en los últimos 12 meses?", "Sí, pero ya pagué"));
+        byte[] pdf = new PdfReportService(new PetitionService()).generateReport(analysis, result, "Ana Pérez", "1020304050",
+                java.util.Map.of("¿Has estado en mora en los últimos 12 meses?", "Sí, pero ya pagué"),
+                new PetitionService.Contact("ana@correo.test", "3001234567"));
 
         assertThat(pdf.length).isGreaterThan(1000);
         assertThat(new String(pdf, 0, 5, StandardCharsets.US_ASCII)).isEqualTo("%PDF-");
@@ -36,12 +37,13 @@ class PdfReportServiceTest {
         analysis.setActivityDescription("x");
         analysis.setImageCount(0);
         analysis.setScoreCalculable(true);
-        PdfReportService service = new PdfReportService(new PetitionService("", ""));
+        PdfReportService service = new PdfReportService(new PetitionService());
 
+        PetitionService.Contact contact = new PetitionService.Contact("ana@correo.test", "3001234567");
         byte[] without = service.generateReport(analysis, com.radiografiacrediticia.app.dto.TestResults.withRating(70),
-                "Ana Pérez", "1020304050", java.util.Map.of());
+                "Ana Pérez", "1020304050", java.util.Map.of(), contact);
         byte[] with = service.generateReport(analysis, com.radiografiacrediticia.app.dto.TestResults.withPetition(),
-                "Ana Pérez", "1020304050", java.util.Map.of());
+                "Ana Pérez", "1020304050", java.util.Map.of(), contact);
 
         int pagesWithout = new com.lowagie.text.pdf.PdfReader(without).getNumberOfPages();
         com.lowagie.text.pdf.PdfReader reader = new com.lowagie.text.pdf.PdfReader(with);
@@ -49,6 +51,13 @@ class PdfReportServiceTest {
         String lastPages = new com.lowagie.text.pdf.parser.PdfTextExtractor(reader)
                 .getTextFromPage(reader.getNumberOfPages() - 1) + new com.lowagie.text.pdf.parser.PdfTextExtractor(reader)
                 .getTextFromPage(reader.getNumberOfPages());
-        assertThat(lastPages).contains("De ustedes").doesNotContain("Claro");
+        assertThat(lastPages).contains("De ustedes").contains("3001234567").doesNotContain("Claro");
+
+        // El celular solo va en el derecho de petición, no en las páginas del informe.
+        com.lowagie.text.pdf.PdfReader plain = new com.lowagie.text.pdf.PdfReader(without);
+        com.lowagie.text.pdf.parser.PdfTextExtractor extractor = new com.lowagie.text.pdf.parser.PdfTextExtractor(plain);
+        for (int i = 1; i <= plain.getNumberOfPages(); i++) {
+            assertThat(extractor.getTextFromPage(i)).doesNotContain("3001234567");
+        }
     }
 }

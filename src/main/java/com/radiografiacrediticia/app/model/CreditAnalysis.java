@@ -40,6 +40,13 @@ public class CreditAnalysis {
     @Column(name = "holder_identification", length = 20)
     private String holderIdentification;
 
+    /** Datos de contacto para las notificaciones del derecho de petición (no aparecen en el informe). */
+    @Column(name = "holder_phone", length = 20)
+    private String holderPhone;
+
+    @Column(name = "holder_email", length = 150)
+    private String holderEmail;
+
     /** Nombres de las capturas analizadas, separados por coma. */
     @Column(name = "image_file_names", length = 3000)
     private String imageFileNames;
@@ -129,6 +136,22 @@ public class CreditAnalysis {
 
     public void setHolderIdentification(String holderIdentification) {
         this.holderIdentification = holderIdentification;
+    }
+
+    public String getHolderPhone() {
+        return holderPhone;
+    }
+
+    public void setHolderPhone(String holderPhone) {
+        this.holderPhone = holderPhone;
+    }
+
+    public String getHolderEmail() {
+        return holderEmail;
+    }
+
+    public void setHolderEmail(String holderEmail) {
+        this.holderEmail = holderEmail;
     }
 
     public String getImageFileNames() {

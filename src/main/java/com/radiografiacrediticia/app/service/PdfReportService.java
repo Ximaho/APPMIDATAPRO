@@ -67,10 +67,13 @@ public class PdfReportService {
      * @param userName       nombre a mostrar
      * @param identification documento de identidad del titular (puede ser nulo)
      * @param answers        respuestas del cuestionario (puede estar vacío)
+     * @param contact        correo y celular para las notificaciones del derecho de petición (no se muestran
+     *                       en el informe)
      * @return bytes del PDF generado
      */
     public byte[] generateReport(CreditAnalysis analysis, AnalysisResult result, String userName,
-                                 String identification, Map<String, String> answers) {
+                                 String identification, Map<String, String> answers,
+                                 PetitionService.Contact contact) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         Document document = new Document(PageSize.A4, 48, 48, 40, 56);
         try {
@@ -147,7 +150,7 @@ public class PdfReportService {
             for (AnalysisResult.EntityAction petition : petitions) {
                 document.newPage();
                 pageEvent.plainPages = true;
-                petitionService.write(document, userName, identification, petition, today);
+                petitionService.write(document, userName, identification, contact, petition, today);
             }
         } catch (DocumentException | IOException e) {
             throw new IllegalStateException("No fue posible generar el informe PDF", e);

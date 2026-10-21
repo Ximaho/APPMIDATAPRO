@@ -92,6 +92,9 @@ public class DashboardController {
         if (!model.containsAttribute("fullName")) {
             model.addAttribute("fullName", user.isAdmin() ? "" : user.getFullName());
         }
+        if (!model.containsAttribute("phone")) {
+            model.addAttribute("phone", user.isAdmin() ? "" : user.getPhone());
+        }
         if (!model.containsAttribute("selected")) {
             model.addAttribute("selected", Map.of());
         }
@@ -102,6 +105,8 @@ public class DashboardController {
     public String generate(@RequestParam(name = "images", required = false) List<MultipartFile> images,
                            @RequestParam(name = "fullName", required = false) String fullName,
                            @RequestParam(name = "identification", required = false) String identification,
+                           @RequestParam(name = "phone", required = false) String phone,
+                           @RequestParam(name = "email", required = false) String email,
                            @RequestParam(name = "description", required = false) String description,
                            @RequestParam MultiValueMap<String, String> params,
                            Authentication authentication,
@@ -109,7 +114,7 @@ public class DashboardController {
         User user = currentUser(authentication);
         Map<String, String> answers = Questionnaire.extractAnswers(params);
         try {
-            CreditAnalysis analysis = analysisService.analyzeAndSave(user, fullName, identification,
+            CreditAnalysis analysis = analysisService.analyzeAndSave(user, fullName, identification, phone, email,
                     images == null ? List.of() : images, description, answers);
             return "redirect:/radiografia/" + analysis.getId();
         } catch (MonthlyLimitException e) {
@@ -119,6 +124,8 @@ public class DashboardController {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
             redirectAttributes.addFlashAttribute("fullName", fullName);
             redirectAttributes.addFlashAttribute("identification", identification);
+            redirectAttributes.addFlashAttribute("phone", phone);
+            redirectAttributes.addFlashAttribute("email", email);
             redirectAttributes.addFlashAttribute("description", description);
             redirectAttributes.addFlashAttribute("selected", Questionnaire.selectedById(params));
             return "redirect:/radiografia/nueva";
@@ -145,7 +152,7 @@ public class DashboardController {
 
         AnalysisResult result = analysisService.toResult(analysis);
         byte[] pdf = pdfReportService.generateReport(analysis, result, holderName(analysis, user),
-                holderIdentification(analysis, user), analysisService.answersOf(analysis));
+                holderIdentification(analysis, user), analysisService.answersOf(analysis), contact(analysis, user));
 
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_PDF)
@@ -169,7 +176,7 @@ public class DashboardController {
         AnalysisResult.EntityAction petition = petitions.get(n - 1);
         LocalDate date = analysis.getCreatedAt() != null ? analysis.getCreatedAt().toLocalDate() : LocalDate.now();
         byte[] pdf = petitionService.generate(holderName(analysis, user), holderIdentification(analysis, user),
-                petition, date);
+                contact(analysis, user), petition, date);
         String slug = petition.entity().toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]+", "-")
                 .replaceAll("(^-|-$)", "");
         return ResponseEntity.ok()
@@ -193,6 +200,13 @@ public class DashboardController {
 
     private static String holderIdentification(CreditAnalysis analysis, User user) {
         return analysis.getHolderIdentification() != null ? analysis.getHolderIdentification() : user.getIdentification();
+    }
+
+    /** Correo y celular de la persona; en radiografías antiguas, los de la cuenta. */
+    private static PetitionService.Contact contact(CreditAnalysis analysis, User user) {
+        return new PetitionService.Contact(
+                analysis.getHolderEmail() != null ? analysis.getHolderEmail() : user.getEmail(),
+                analysis.getHolderPhone() != null ? analysis.getHolderPhone() : user.getPhone());
     }
 
     private User currentUser(Authentication authentication) {

@@ -14,11 +14,12 @@ class PetitionServiceTest {
 
     @Test
     void fillsTemplateWithHolderEntityAndNotificationData() throws Exception {
-        PetitionService service = new PetitionService("tramites@radiografia.test", "3001234567");
+        PetitionService service = new PetitionService();
         AnalysisResult.EntityAction action = new AnalysisResult.EntityAction("Bancolombia", "Mora reportada",
                 List.of("Radicar"), true, "Tarjeta de crédito terminada en 1234");
 
-        byte[] pdf = service.generate("Ana Pérez Gómez", "1020304050", action, LocalDate.of(2026, 10, 21));
+        byte[] pdf = service.generate("Ana Pérez Gómez", "1020304050",
+                new PetitionService.Contact("ana@correo.test", "3001234567"), action, LocalDate.of(2026, 10, 21));
 
         String text = allText(pdf).replaceAll("\\s+", " ");
         assertThat(text)
@@ -30,16 +31,16 @@ class PetitionServiceTest {
                 .contains("PETICIONES")
                 .contains("SÉPTIMO")
                 .contains("Ley 2157 de 2021")
-                .contains("tramites@radiografia.test")
+                .contains("ana@correo.test")
                 .contains("3001234567");
     }
 
     @Test
-    void leavesBlanksWhenNotificationDataIsNotConfigured() throws Exception {
-        PetitionService service = new PetitionService("", "");
+    void leavesBlanksWhenContactDataIsMissing() throws Exception {
+        PetitionService service = new PetitionService();
         AnalysisResult.EntityAction action = new AnalysisResult.EntityAction("Banco X", "", List.of(), true, "");
 
-        String text = allText(service.generate("Ana", "123456", action, LocalDate.of(2026, 1, 5)));
+        String text = allText(service.generate("Ana", "123456", new PetitionService.Contact(null, ""), action, LocalDate.of(2026, 1, 5)));
 
         assertThat(text).contains("correo electrónico: ____").doesNotContain("Obligación:");
     }

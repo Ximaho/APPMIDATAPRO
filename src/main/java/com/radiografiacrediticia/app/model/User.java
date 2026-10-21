@@ -35,6 +35,10 @@ public class User {
     @Column(unique = true, length = 20)
     private String identification;
 
+    /** Celular de contacto; se usa en las notificaciones del derecho de petición. */
+    @Column(length = 20)
+    private String phone;
+
     /** Administrador: sin límite mensual y sin identificación ligada (para pruebas). */
     @Column(name = "admin")
     private Boolean admin;
@@ -90,6 +94,14 @@ public class User {
 
     public void setIdentification(String identification) {
         this.identification = identification;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
     }
 
     public boolean isAdmin() {

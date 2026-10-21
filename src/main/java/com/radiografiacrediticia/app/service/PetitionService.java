@@ -14,7 +14,6 @@ import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 import com.radiografiacrediticia.app.dto.AnalysisResult.EntityAction;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -28,7 +27,8 @@ import java.util.Locale;
 /**
  * Genera el derecho de petición dirigido a una entidad, a partir del formato
  * "05. DERECHO DE PETICIÓN (no abogado)". El texto jurídico es fijo; solo se personalizan la fecha,
- * la entidad, el titular, su identificación, la obligación y los datos de notificación. Los datos que
+ * la entidad, el titular, su identificación, la obligación y los datos de notificación (correo y celular
+ * de la propia persona). Los datos que
  * la aplicación no conoce (ciudad, lugar de expedición, firma) quedan como espacios para completar a mano.
  */
 @Service
@@ -42,24 +42,19 @@ public class PetitionService {
     private final Font bold = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10f, Color.BLACK);
     private final Font italic = FontFactory.getFont(FontFactory.HELVETICA_OBLIQUE, 8.5f, Color.BLACK);
 
-    private final String notificationEmail;
-    private final String notificationPhone;
-
-    public PetitionService(@Value("${radiografia.peticion.correo:}") String notificationEmail,
-                           @Value("${radiografia.peticion.telefono:}") String notificationPhone) {
-        this.notificationEmail = notificationEmail == null ? "" : notificationEmail.trim();
-        this.notificationPhone = notificationPhone == null ? "" : notificationPhone.trim();
+    /** Datos de notificación de la persona: correo de su cuenta y celular del formulario. */
+    public record Contact(String email, String phone) {
     }
 
     /** Derecho de petición como PDF independiente, listo para imprimir y firmar. */
-    public byte[] generate(String holderName, String holderId, EntityAction action, LocalDate date) {
+    public byte[] generate(String holderName, String holderId, Contact contact, EntityAction action, LocalDate date) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         Document document = new Document(PageSize.A4, 60, 60, 48, 48);
         try {
             PdfWriter.getInstance(document, out);
             document.addTitle("Derecho de petición - " + action.entity());
             document.open();
-            write(document, holderName, holderId, action, date);
+            write(document, holderName, holderId, contact, action, date);
         } catch (DocumentException e) {
             throw new IllegalStateException("No fue posible generar el derecho de petición", e);
         } finally {
@@ -71,7 +66,8 @@ public class PetitionService {
     }
 
     /** Escribe el derecho de petición en un documento abierto, desde la posición actual. */
-    public void write(Document document, String holderName, String holderId, EntityAction action, LocalDate date)
+    public void write(Document document, String holderName, String holderId, Contact contact, EntityAction action,
+                      LocalDate date)
             throws DocumentException {
         add(document, BLANK + ", " + date.format(DATE), normal, Element.ALIGN_LEFT, 18);
 
@@ -190,8 +186,8 @@ public class PetitionService {
 
         add(document, "NOTIFICACIONES", bold, Element.ALIGN_LEFT, 2);
         add(document, "Las notificaciones las recibiré al correo electrónico: "
-                + (notificationEmail.isEmpty() ? BLANK : notificationEmail)
-                + " y al número de celular: " + (notificationPhone.isEmpty() ? BLANK : notificationPhone) + ".",
+                + orBlank(contact == null ? null : contact.email())
+                + " y al número de celular: " + orBlank(contact == null ? null : contact.phone()) + ".",
                 normal, Element.ALIGN_JUSTIFIED, 14);
 
         // Despedida y firma juntas: si no caben en la página, pasan completas a la siguiente.

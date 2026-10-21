@@ -82,8 +82,8 @@ public class CreditAnalysisService {
      * para que un error de digitación en un intento fallido no la deje fija.
      * La llamada a la API se hace fuera de una transacción para no retener conexiones de BD.
      */
-    public CreditAnalysis analyzeAndSave(User user, String fullName, String identification,
-                                         List<MultipartFile> images, String description,
+    public CreditAnalysis analyzeAndSave(User user, String fullName, String identification, String phone,
+                                         String email, List<MultipartFile> images, String description,
                                          Map<String, String> answers) {
         nextAvailableDate(user).ifPresent(date -> {
             throw new MonthlyLimitException(date);
@@ -94,6 +94,17 @@ public class CreditAnalysisService {
             throw new IllegalArgumentException("Escriba su nombre completo (máximo 120 caracteres).");
         }
         String cleanId = resolveIdentification(user, identification);
+        String cleanPhone = normalizePhone(phone);
+        if (cleanPhone.length() < 7 || cleanPhone.length() > 15) {
+            throw new IllegalArgumentException("Escriba un número de celular válido (solo números, p. ej. 3001234567).");
+        }
+        String cleanEmail = user.getEmail();
+        if (user.isAdmin()) {
+            cleanEmail = email == null ? "" : email.trim().toLowerCase(Locale.ROOT);
+            if (!cleanEmail.matches("[^@\\s]+@[^@\\s]+\\.[^@\\s]+") || cleanEmail.length() > 150) {
+                throw new IllegalArgumentException("Escriba el correo electrónico de la persona analizada.");
+            }
+        }
 
         List<MultipartFile> files = images == null ? List.of()
                 : images.stream().filter(f -> f != null && !f.isEmpty()).toList();
@@ -108,6 +119,7 @@ public class CreditAnalysisService {
         if (!user.isAdmin()) {
             user.setFullName(cleanName);
             user.setIdentification(cleanId);
+            user.setPhone(cleanPhone);
             userRepository.save(user);
         }
 
@@ -115,6 +127,8 @@ public class CreditAnalysisService {
         analysis.setUser(user);
         analysis.setHolderName(cleanName);
         analysis.setHolderIdentification(cleanId);
+        analysis.setHolderPhone(cleanPhone);
+        analysis.setHolderEmail(cleanEmail);
         analysis.setActivityDescription(description.trim());
         analysis.setImageFileNames(truncate(files.stream()
                 .map(f -> sanitizeFileName(f.getOriginalFilename()))
@@ -160,6 +174,12 @@ public class CreditAnalysisService {
             throw new IllegalArgumentException("Esta identificación ya está ligada a otra cuenta.");
         }
         return clean;
+    }
+
+    /** Solo dígitos; quita el indicativo +57 de Colombia si viene incluido. */
+    static String normalizePhone(String phone) {
+        String digits = phone == null ? "" : phone.replaceAll("\\D", "");
+        return digits.length() == 12 && digits.startsWith("57") ? digits.substring(2) : digits;
     }
 
     static String normalizeIdentification(String identification) {

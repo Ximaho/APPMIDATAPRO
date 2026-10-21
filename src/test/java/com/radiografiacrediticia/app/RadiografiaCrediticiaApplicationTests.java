@@ -261,6 +261,7 @@ class RadiografiaCrediticiaApplicationTests {
     private static MockMultipartHttpServletRequestBuilder radiografia() {
         MockMultipartHttpServletRequestBuilder builder = multipart("/radiografia");
         builder.param("fullName", "María Gómez Ruiz")
+                .param("phone", "+57 300 123 4567")
                 .param("description", "Estuve en mora pero ya pagué.")
                 .with(csrf());
         return builder;
@@ -315,5 +316,38 @@ class RadiografiaCrediticiaApplicationTests {
                 .andExpect(header().string("Content-Type", "application/pdf"))
                 .andExpect(header().string("Content-Disposition", containsString("derecho-de-peticion-bancolombia.pdf")));
         mvc.perform(get(location + "/peticion/2")).andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser(username = "tomas@example.com")
+    void phoneIsRequiredStoredAndUsedOnlyInThePetition() throws Exception {
+        when(claudeAiService.analyze(anyList(), anyString(), anyString()))
+                .thenReturn(com.radiografiacrediticia.app.dto.TestResults.withPetition());
+        userRepository.save(new User("Tomás", "tomas@example.com", "$2a$10$hash"));
+
+        MockMultipartHttpServletRequestBuilder noPhone = multipart("/radiografia");
+        noPhone.file(new MockMultipartFile("images", "r1.png", "image/png", PNG))
+                .param("fullName", "Tomás Ruiz").param("identification", "55551111")
+                .param("description", "x").with(csrf());
+        mvc.perform(noPhone)
+                .andExpect(redirectedUrl("/radiografia/nueva"))
+                .andExpect(flash().attribute("error", containsString("celular")));
+        verify(claudeAiService, never()).analyze(anyList(), anyString(), anyString());
+
+        String location = mvc.perform(radiografia().file(new MockMultipartFile("images", "r1.png", "image/png", PNG))
+                        .param("identification", "55551111"))
+                .andExpect(redirectedUrlPattern("/radiografia/*"))
+                .andReturn().getResponse().getRedirectedUrl();
+
+        assertThat(userRepository.findByEmailIgnoreCase("tomas@example.com").orElseThrow().getPhone())
+                .isEqualTo("3001234567");
+        CreditAnalysis saved = analysisRepository.findAll().get(0);
+        assertThat(saved.getHolderPhone()).isEqualTo("3001234567");
+        assertThat(saved.getHolderEmail()).isEqualTo("tomas@example.com");
+
+        mvc.perform(get(location)).andExpect(content().string(not(containsString("3001234567"))));
+        // Sin radiografía este mes, el formulario trae precargado el celular guardado.
+        analysisRepository.deleteAll();
+        mvc.perform(get("/radiografia/nueva")).andExpect(content().string(containsString("value=\"3001234567\"")));
     }
 }
