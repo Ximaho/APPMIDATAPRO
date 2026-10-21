@@ -86,7 +86,7 @@ public class DashboardController {
         model.addAttribute("maxOpenAnswer", Questionnaire.MAX_OPEN_ANSWER);
         model.addAttribute("maxDescriptionChars", ClaudeAiService.MAX_DESCRIPTION_CHARS);
         if (!model.containsAttribute("fullName")) {
-            model.addAttribute("fullName", user.getFullName());
+            model.addAttribute("fullName", user.isAdmin() ? "" : user.getFullName());
         }
         if (!model.containsAttribute("selected")) {
             model.addAttribute("selected", Map.of());
@@ -130,6 +130,7 @@ public class DashboardController {
         model.addAttribute("result", analysisService.toResult(analysis));
         model.addAttribute("answers", analysisService.answersOf(analysis));
         model.addAttribute("disclaimer", AnalysisResult.DISCLAIMER);
+        model.addAttribute("holderName", holderName(analysis, user));
         return "radiografia";
     }
 
@@ -139,8 +140,8 @@ public class DashboardController {
         CreditAnalysis analysis = findOwned(id, user);
 
         AnalysisResult result = analysisService.toResult(analysis);
-        byte[] pdf = pdfReportService.generateReport(analysis, result, user.getFullName(),
-                user.getIdentification(), analysisService.answersOf(analysis));
+        byte[] pdf = pdfReportService.generateReport(analysis, result, holderName(analysis, user),
+                holderIdentification(analysis, user), analysisService.answersOf(analysis));
 
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_PDF)
@@ -154,6 +155,15 @@ public class DashboardController {
     private CreditAnalysis findOwned(Long id, User user) {
         return analysisService.findForUser(id, user)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Radiografía no encontrada"));
+    }
+
+    /** Nombre de la persona analizada; las radiografías antiguas no lo guardaban y usan el de la cuenta. */
+    private static String holderName(CreditAnalysis analysis, User user) {
+        return analysis.getHolderName() != null ? analysis.getHolderName() : user.getFullName();
+    }
+
+    private static String holderIdentification(CreditAnalysis analysis, User user) {
+        return analysis.getHolderIdentification() != null ? analysis.getHolderIdentification() : user.getIdentification();
     }
 
     private User currentUser(Authentication authentication) {

@@ -42,6 +42,21 @@ valora algún factor, recibe una valoración neutra (50/100) marcada como no ver
 se refleja en el nivel de confianza. El desglose por factor se guarda, pero no se muestra en el informe. El aviso
 obligatorio de la metodología aparece siempre en la página y en el PDF.
 
+## Cuenta de administrador (pruebas sin límite)
+
+Defina estas variables de entorno antes de arrancar la aplicación:
+
+```powershell
+$env:ADMIN_EMAIL = "su-correo@ejemplo.com"
+$env:ADMIN_PASSWORD = "una-clave-segura"      # mínimo 8 caracteres
+```
+
+- Si la cuenta no existe, se crea al arrancar con esa contraseña. Si ya existe (registrada desde la página),
+  solo se marca como administrador y conserva su contraseña.
+- El administrador **no tiene límite mensual** y su identificación **no queda ligada**: en cada prueba puede
+  escribir el nombre y la cédula de una persona distinta (se guardan con cada radiografía).
+- Las credenciales nunca se escriben en el código ni en `application.properties`.
+
 ## Reglas de negocio
 
 - **Una radiografía por mes calendario** por usuario. Para pruebas se desactiva con `LIMITE_MENSUAL=false`.

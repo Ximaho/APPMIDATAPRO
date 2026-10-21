@@ -14,7 +14,7 @@
 
     <a th:if="${nextAvailable == null}" class="tarjeta" th:href="@{/radiografia/nueva}">
         <div>
-            <p class="tarjeta-meta">1 vez al mes</p>
+            <p class="tarjeta-meta" th:text="${user.admin ? 'Sin límite · administrador' : '1 vez al mes'}">1 vez al mes</p>
             <h2>Radiografía de perfil</h2>
             <p>Suba las capturas de su historial crediticio (MiDataCrédito y/o TransUnion) o, si no tiene acceso
                 a ellas, responda unas preguntas sobre su situación y reciba una radiografía clara de su
@@ -43,6 +43,7 @@
                 <div>
                     <span class="puntaje" th:text="${scores[h.id]}">650</span>
                     <span th:text="${#temporals.format(h.createdAt, 'dd/MM/yyyy')}">01/10/2026</span>
+                    <span class="texto-sec" th:if="${user.admin and h.holderName != null}" th:text="${'· ' + h.holderName}"></span>
                 </div>
                 <div class="acciones">
                     <a th:href="@{/radiografia/{id}(id=${h.id})}">Ver</a>

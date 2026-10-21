@@ -16,6 +16,7 @@
         <img th:src="@{/img/logo-icon.png}" alt="Radiografía Crediticia">
     </a>
     <nav class="topbar-links">
+        <span class="insignia" th:if="${user.admin}">Administrador · sin límite</span>
         <span class="nombre" th:text="${user.fullName}">Usuario</span>
         <a th:href="@{/inicio}">Inicio</a>
         <form th:action="@{/logout}" method="post">

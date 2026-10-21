@@ -33,6 +33,13 @@ public class CreditAnalysis {
     @Column(name = "activity_description", nullable = false, length = 4000)
     private String activityDescription;
 
+    /** Nombre e identificación de la persona analizada al momento de generar la radiografía. */
+    @Column(name = "holder_name", length = 120)
+    private String holderName;
+
+    @Column(name = "holder_identification", length = 20)
+    private String holderIdentification;
+
     /** Nombres de las capturas analizadas, separados por coma. */
     @Column(name = "image_file_names", length = 3000)
     private String imageFileNames;
@@ -102,6 +109,22 @@ public class CreditAnalysis {
 
     public void setActivityDescription(String activityDescription) {
         this.activityDescription = activityDescription;
+    }
+
+    public String getHolderName() {
+        return holderName;
+    }
+
+    public void setHolderName(String holderName) {
+        this.holderName = holderName;
+    }
+
+    public String getHolderIdentification() {
+        return holderIdentification;
+    }
+
+    public void setHolderIdentification(String holderIdentification) {
+        this.holderIdentification = holderIdentification;
     }
 
     public String getImageFileNames() {

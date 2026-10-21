@@ -10,7 +10,8 @@
         <h1 class="titulo">Su radiografía crediticia</h1>
     </div>
     <p>Suba sus capturas y/o conteste las preguntas y reciba su radiografía del mes.
-        Solo puede generar una radiografía por mes.</p>
+        <th:block th:unless="${user.admin}">Solo puede generar una radiografía por mes.</th:block>
+        <th:block th:if="${user.admin}">Cuenta de administrador: puede generar radiografías sin límite.</th:block></p>
 
     <div class="col" th:insert="~{fragments :: alertas}"></div>
 
@@ -22,11 +23,17 @@
                    required maxlength="120" autocomplete="name">
 
             <label class="label-fuerte" for="identification">Identificación</label>
-            <th:block th:if="${user.identification != null}">
+            <th:block th:if="${user.admin}">
+                <input class="campo" type="text" id="identification" name="identification"
+                       th:value="${identification}" required maxlength="25" placeholder="Número de documento">
+                <p class="ayuda">Cuenta de administrador: la identificación no queda ligada a la cuenta; puede usar
+                    una diferente en cada prueba.</p>
+            </th:block>
+            <th:block th:if="${!user.admin and user.identification != null}">
                 <input class="campo" type="text" id="identification" th:value="${user.identification}" readonly>
                 <p class="ayuda">Su cuenta ya quedó ligada a este usuario — no se puede cambiar.</p>
             </th:block>
-            <th:block th:if="${user.identification == null}">
+            <th:block th:if="${!user.admin and user.identification == null}">
                 <input class="campo" type="text" id="identification" name="identification"
                        th:value="${identification}" required maxlength="25" inputmode="text"
                        placeholder="Número de documento">

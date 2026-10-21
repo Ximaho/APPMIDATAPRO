@@ -65,7 +65,7 @@ public class CreditAnalysisService {
      */
     @Transactional(readOnly = true)
     public Optional<LocalDate> nextAvailableDate(User user) {
-        if (!monthlyLimitEnabled) {
+        if (!monthlyLimitEnabled || user.isAdmin()) {
             return Optional.empty();
         }
         YearMonth thisMonth = YearMonth.now();
@@ -102,12 +102,17 @@ public class CreditAnalysisService {
 
         AnalysisResult result = claudeAiService.analyze(files, description, Questionnaire.format(answers));
 
-        user.setFullName(cleanName);
-        user.setIdentification(cleanId);
-        userRepository.save(user);
+        // En la cuenta de administrador cada prueba puede ser de una persona distinta: no se modifica la cuenta.
+        if (!user.isAdmin()) {
+            user.setFullName(cleanName);
+            user.setIdentification(cleanId);
+            userRepository.save(user);
+        }
 
         CreditAnalysis analysis = new CreditAnalysis();
         analysis.setUser(user);
+        analysis.setHolderName(cleanName);
+        analysis.setHolderIdentification(cleanId);
         analysis.setActivityDescription(description.trim());
         analysis.setImageFileNames(truncate(files.stream()
                 .map(f -> sanitizeFileName(f.getOriginalFilename()))
@@ -132,6 +137,14 @@ public class CreditAnalysisService {
 
     /** Usa la identificación ya ligada a la cuenta o valida la nueva (normalizada, sin puntos ni espacios). */
     private String resolveIdentification(User user, String identification) {
+        if (user.isAdmin()) {
+            String clean = normalizeIdentification(identification);
+            if (!clean.matches("[A-Z0-9]{5,20}")) {
+                throw new IllegalArgumentException(
+                        "Escriba un número de identificación válido (entre 5 y 20 letras o números).");
+            }
+            return clean;
+        }
         if (user.getIdentification() != null) {
             return user.getIdentification();
         }

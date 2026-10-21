@@ -35,6 +35,10 @@ public class User {
     @Column(unique = true, length = 20)
     private String identification;
 
+    /** Administrador: sin límite mensual y sin identificación ligada (para pruebas). */
+    @Column(name = "admin")
+    private Boolean admin;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -86,6 +90,14 @@ public class User {
 
     public void setIdentification(String identification) {
         this.identification = identification;
+    }
+
+    public boolean isAdmin() {
+        return Boolean.TRUE.equals(admin);
+    }
+
+    public void setAdmin(boolean admin) {
+        this.admin = admin;
     }
 
     public LocalDateTime getCreatedAt() {

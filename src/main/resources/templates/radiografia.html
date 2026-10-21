@@ -11,7 +11,7 @@
             <div>
                 <h1 class="titulo">Su radiografía crediticia</h1>
                 <p class="texto-sec" th:text="'Generada el ' + ${#temporals.format(analysis.createdAt, 'dd/MM/yyyy')}
-                    + ' · ' + ${user.fullName}"></p>
+                    + ' · ' + ${holderName}"></p>
             </div>
         </div>
         <a class="btn btn-secundario" th:href="@{/radiografia/{id}/pdf(id=${analysis.id})}">Descargar PDF</a>
